@@ -1,14 +1,17 @@
 #ifndef CAPTURETHREAD_H
 #define CAPTURETHREAD_H
 
+#include <mutex>
+#include <deque>
+
+#include <QMediaPlayer>
 #include <QMutex>
 #include <QString>
 #include <QThread>
-#include <deque>
-#include <mutex>
 
 #include "opencv2/world.hpp"
 #include "opencv2/opencv.hpp"
+
 
 class PlayerControls;
 
@@ -17,8 +20,8 @@ class CaptureThread : public QThread
     Q_OBJECT
 
 public:
-    CaptureThread(QString videoPath, std::mutex *lock, PlayerControls* controls);
-    CaptureThread(int camera, std::mutex *lock, PlayerControls* controls);
+    CaptureThread(QString videoPath, std::mutex *lock, qreal playback_rate = 30);
+    CaptureThread(int camera, std::mutex *lock, qreal playback_rate = 30);
 
     ~CaptureThread();
     void setRunning(bool run) {running = run; }
@@ -29,18 +32,20 @@ private:
     void videoPlayback(bool& haveMoreFrames);
     void cameraStream();
     bool readNextVideoFrame();
+    void setState(QMediaPlayer::State state);
 
  public slots:
     void play();
-//    void pause();
-//    void stop();
-//    void next();
-//    void previous();
+    void pause();
+    void next();
+    void previous();
+    void rateChanged(qreal new_rate);
 
 
 signals:
     void frameCaptured(cv::Mat *data, qint64 frameNum);
     void fpsChanged(float fps);
+    void stateChanged(QMediaPlayer::State state);
 
 private:
     bool running;
@@ -48,15 +53,16 @@ private:
     QString videoPath;
     std::mutex *data_lock;
     cv::Mat frame;
-    float playback_fps = 10;
-    float delay_ms = 1/playback_fps * 1000;
+    float playback_fps;
+    float delay_ms;
 
     // OpenCV
-    cv::VideoCapture cap;
+    cv::VideoCapture m_cap;
     cv::Mat tmp_frame;
 
     // Playback controls
-    PlayerControls* m_playercontrols;
+    QMediaPlayer::State m_state = QMediaPlayer::StoppedState;
+
 
     // FPS calculating
     bool fps_calculating;

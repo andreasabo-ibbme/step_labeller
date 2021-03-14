@@ -27,10 +27,10 @@ void MainWindow::initUI()
 {
     qDebug() << "HERE";
     this->resize(2000, 800);
-
+    constexpr size_t default_fps = 30;
 
     // Set up playback controls
-    controls = new PlayerControls(this);
+    controls = new PlayerControls(default_fps, this);
 
     // Set up the menubar
     fileMenu = menuBar()->addMenu("&File");
@@ -82,9 +82,6 @@ void MainWindow::initUI()
 
     connect(findVideosButton, &QPushButton::pressed, this, &MainWindow::findVideos);
 
-
-
-
     createActions();
 
 }
@@ -110,6 +107,9 @@ void MainWindow::createActions()
 void MainWindow::connectPlaybackControls()
 {
     connect(controls, &PlayerControls::play, capturer, &CaptureThread::play);
+    connect(controls, &PlayerControls::pause, capturer, &CaptureThread::pause);
+    connect(controls, &PlayerControls::next, capturer, &CaptureThread::next);
+    connect(controls, &PlayerControls::previous, capturer, &CaptureThread::previous);
 }
 
 void MainWindow::showCameraInfo()
@@ -126,24 +126,7 @@ void MainWindow::showCameraInfo()
 
 
 
-void MainWindow::openCamera()
-{
-    if (capturer != nullptr) {
-        // If a thread is already running, stop it and start adn new one
-        capturer->setRunning(false);
-        disconnect(capturer, &CaptureThread::frameCaptured, this, &MainWindow::updateFrame);
-        connect(capturer, &CaptureThread::finished, capturer, &CaptureThread::deleteLater);
-    }
 
-    int camera_ind = 0;
-    capturer = new CaptureThread(camera_ind, data_lock, controls);
-    connect(capturer, &CaptureThread::frameCaptured, this, &MainWindow::updateFrame);
-    connect(capturer, &CaptureThread::fpsChanged, this, &MainWindow::updateFPS);
-    connectPlaybackControls();
-    capturer->start();
-    capturer->startCalcFPS(true);
-    mainStatusLabel->setText(QString("Capturing camera: %1").arg(camera_ind));
-}
 
 void MainWindow::updateFrame(cv::Mat* mat, qint64 frameNum)
 {
@@ -202,7 +185,28 @@ void MainWindow::findVideos()
      else {
          // TODO: error handling if did not select dir correctly.
      }
+}
 
+void MainWindow::openCamera()
+{
+    if (capturer != nullptr) {
+        // If a thread is already running, stop it and start adn new one
+        capturer->setRunning(false);
+        disconnect(capturer, &CaptureThread::frameCaptured, this, &MainWindow::updateFrame);
+        connect(capturer, &CaptureThread::finished, capturer, &CaptureThread::deleteLater);
+    }
+
+    int camera_ind = 0;
+    capturer = new CaptureThread(camera_ind, data_lock,  controls->playbackRate());
+    connect(capturer, &CaptureThread::frameCaptured, this, &MainWindow::updateFrame);
+    connect(capturer, &CaptureThread::fpsChanged, this, &MainWindow::updateFPS);
+    connect(capturer, &CaptureThread::stateChanged, controls, &PlayerControls::setState);
+    connect(controls, &PlayerControls::changeRate, capturer, &CaptureThread::rateChanged);
+
+    connectPlaybackControls();
+    capturer->start();
+    capturer->startCalcFPS(true);
+    mainStatusLabel->setText(QString("Capturing camera: %1").arg(camera_ind));
 }
 
 void MainWindow::openVideo(QString video)
@@ -215,13 +219,16 @@ void MainWindow::openVideo(QString video)
         connect(capturer, &CaptureThread::finished, capturer, &CaptureThread::deleteLater);
     }
 
-    capturer = new CaptureThread(video, data_lock, controls);
+    capturer = new CaptureThread(video, data_lock, controls->playbackRate());
     connect(capturer, &CaptureThread::frameCaptured, this, &MainWindow::updateFrame);
     connect(capturer, &CaptureThread::fpsChanged, this, &MainWindow::updateFPS);
+    connect(capturer, &CaptureThread::stateChanged, controls, &PlayerControls::setState);
+    connect(controls, &PlayerControls::changeRate, capturer, &CaptureThread::rateChanged);
+
     connectPlaybackControls();
     capturer->start();
     capturer->startCalcFPS(true);
-    mainStatusLabel->setText(QString("Capturing camera: %1").arg(video));
+    mainStatusLabel->setText(QString("Playing video from: %1").arg(video));
 }
 
 

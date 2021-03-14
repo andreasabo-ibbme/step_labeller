@@ -58,6 +58,8 @@ QT_BEGIN_NAMESPACE
 class QAbstractButton;
 class QAbstractSlider;
 class QComboBox;
+class QLabel;
+class QLineEdit;
 QT_END_NAMESPACE
 
 class PlayerControls : public QWidget
@@ -66,6 +68,7 @@ class PlayerControls : public QWidget
 
 public:
     explicit PlayerControls(QWidget *parent = nullptr);
+    explicit PlayerControls(qreal fps_start = 30, QWidget *parent = nullptr);
 
     QMediaPlayer::State state() const;
     int volume() const;
@@ -104,6 +107,10 @@ private:
     QAbstractButton *m_muteButton = nullptr;
     QAbstractSlider *m_volumeSlider = nullptr;
     QComboBox *m_rateBox = nullptr;
+    QLineEdit *m_fps_box = nullptr;
+    QLabel *m_fps_label = nullptr;
+    qreal m_playback_rate;
+
 };
 
 #endif // PLAYERCONTROLS_H

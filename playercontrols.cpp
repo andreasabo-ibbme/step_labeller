@@ -50,15 +50,19 @@
 
 #include "playercontrols.h"
 
+#include <QAudio>
 #include <QBoxLayout>
+#include <QComboBox>
+#include <QLabel>
+#include <QLineEdit>
 #include <QSlider>
 #include <QStyle>
 #include <QToolButton>
-#include <QComboBox>
-#include <QAudio>
 
-PlayerControls::PlayerControls(QWidget *parent)
-    : QWidget(parent)
+#include <QDebug>
+
+PlayerControls::PlayerControls(qreal fps_start, QWidget *parent)
+    : QWidget(parent), m_playback_rate(fps_start)
 {
     m_playButton = new QToolButton(this);
     m_playButton->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
@@ -81,23 +85,27 @@ PlayerControls::PlayerControls(QWidget *parent)
 
     connect(m_previousButton, &QAbstractButton::clicked, this, &PlayerControls::previous);
 
-    m_muteButton = new QToolButton(this);
-    m_muteButton->setIcon(style()->standardIcon(QStyle::SP_MediaVolume));
+//    m_muteButton = new QToolButton(this);
+//    m_muteButton->setIcon(style()->standardIcon(QStyle::SP_MediaVolume));
 
-    connect(m_muteButton, &QAbstractButton::clicked, this, &PlayerControls::muteClicked);
+//    connect(m_muteButton, &QAbstractButton::clicked, this, &PlayerControls::muteClicked);
 
-    m_volumeSlider = new QSlider(Qt::Horizontal, this);
-    m_volumeSlider->setRange(0, 100);
+//    m_volumeSlider = new QSlider(Qt::Horizontal, this);
+//    m_volumeSlider->setRange(0, 100);
 
-    connect(m_volumeSlider, &QSlider::valueChanged, this, &PlayerControls::onVolumeSliderValueChanged);
+//    connect(m_volumeSlider, &QSlider::valueChanged, this, &PlayerControls::onVolumeSliderValueChanged);
 
-    m_rateBox = new QComboBox(this);
-    m_rateBox->addItem("0.5x", QVariant(0.5));
-    m_rateBox->addItem("1.0x", QVariant(1.0));
-    m_rateBox->addItem("2.0x", QVariant(2.0));
-    m_rateBox->setCurrentIndex(1);
+//    m_rateBox = new QComboBox(this);
+//    m_rateBox->addItem("0.5x", QVariant(0.5));
+//    m_rateBox->addItem("1.0x", QVariant(1.0));
+//    m_rateBox->addItem("2.0x", QVariant(2.0));
+//    m_rateBox->setCurrentIndex(1);
+    //    connect(m_rateBox, QOverload<int>::of(&QComboBox::activated), this, &PlayerControls::updateRate);
 
-    connect(m_rateBox, QOverload<int>::of(&QComboBox::activated), this, &PlayerControls::updateRate);
+    m_fps_label = new QLabel(QString("FPS:"), this);
+
+    m_fps_box = new QLineEdit(QString::number(m_playback_rate), this);
+    connect(m_fps_box, &QLineEdit::editingFinished, this, &PlayerControls::updateRate);
 
     QBoxLayout *layout = new QHBoxLayout;
     layout->setContentsMargins(0, 0, 0, 0);
@@ -105,9 +113,10 @@ PlayerControls::PlayerControls(QWidget *parent)
     layout->addWidget(m_previousButton);
     layout->addWidget(m_playButton);
     layout->addWidget(m_nextButton);
-    layout->addWidget(m_muteButton);
-    layout->addWidget(m_volumeSlider);
-    layout->addWidget(m_rateBox);
+//    layout->addWidget(m_muteButton);
+//    layout->addWidget(m_volumeSlider);
+    layout->addWidget(m_fps_label);
+    layout->addWidget(m_fps_box);
     setLayout(layout);
 }
 
@@ -118,6 +127,7 @@ QMediaPlayer::State PlayerControls::state() const
 
 void PlayerControls::setState(QMediaPlayer::State state)
 {
+    qDebug() << "PlayerControls::setState: " << state;
     if (state != m_playerState) {
         m_playerState = state;
 
@@ -176,10 +186,15 @@ void PlayerControls::playClicked()
 {
     switch (m_playerState) {
     case QMediaPlayer::StoppedState:
+        qDebug() << "QMediaPlayer::StoppedState";
     case QMediaPlayer::PausedState:
+        qDebug() << "QMediaPlayer::PausedState";
+
         emit play();
         break;
     case QMediaPlayer::PlayingState:
+        qDebug() << "QMediaPlayer::PlayingState";
+
         emit pause();
         break;
     }
@@ -192,7 +207,7 @@ void PlayerControls::muteClicked()
 
 qreal PlayerControls::playbackRate() const
 {
-    return m_rateBox->itemData(m_rateBox->currentIndex()).toDouble();
+    return m_playback_rate;
 }
 
 void PlayerControls::setPlaybackRate(float rate)
@@ -210,6 +225,8 @@ void PlayerControls::setPlaybackRate(float rate)
 
 void PlayerControls::updateRate()
 {
+    m_playback_rate = m_fps_box->text().toDouble();
+    qDebug() << "PlayerControls::updateRate(): " << m_playback_rate;
     emit changeRate(playbackRate());
 }
 

@@ -30,6 +30,8 @@ private:
     void initUI();
     void createActions();
     void connectPlaybackControls();
+    void connectCaptureControls();
+
 
 private slots:
     void showCameraInfo();
@@ -64,6 +66,8 @@ private:
 
     // To move to videolist widget
     QFileInfoList m_video_list;
+
+
 
 };
 #endif // MAINWINDOW_H

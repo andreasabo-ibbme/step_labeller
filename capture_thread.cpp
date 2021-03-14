@@ -6,23 +6,23 @@
 #include <mutex>
 #include "opencv2/videoio.hpp"
 
-CaptureThread::CaptureThread(int camera, std::mutex *lock, PlayerControls* controls):
-    running(false), cameraID(camera), videoPath(""), data_lock(lock), m_playercontrols(controls), fps_calculating(false), fps_sum(0), cur_fps_sample_count(0)
+CaptureThread::CaptureThread(int camera, std::mutex *lock, qreal playback_rate):
+    running(false), cameraID(camera), videoPath(""), data_lock(lock), playback_fps(playback_rate), fps_calculating(false), fps_sum(0), cur_fps_sample_count(0)
 {
     time_samples.resize(fps_samples);
-
+    delay_ms = 1/playback_fps * 1000;
 }
 
-CaptureThread::CaptureThread(QString videoPath, std::mutex *lock, PlayerControls* controls):
-    running(false), cameraID(-1), videoPath(videoPath), data_lock(lock), m_playercontrols(controls), fps_calculating(false), fps_sum(0), cur_fps_sample_count(0)
+CaptureThread::CaptureThread(QString videoPath, std::mutex *lock, qreal playback_rate):
+    running(false), cameraID(-1), videoPath(videoPath), data_lock(lock), playback_fps(playback_rate), fps_calculating(false), fps_sum(0), cur_fps_sample_count(0)
 {
     time_samples.resize(fps_samples);
-
+    delay_ms = 1/playback_fps * 1000;
 }
 
 CaptureThread::~CaptureThread()
 {
-    cap.release();
+    m_cap.release();
 }
 
 void CaptureThread::run()
@@ -30,31 +30,34 @@ void CaptureThread::run()
     qDebug() << "CaptureThread::run()" << videoPath;
 
     running = true;
-
+    setState(QMediaPlayer::PlayingState);
     if (cameraID < 0) { // Video playback
-        cap.open((videoPath.toStdString().c_str()));
+        m_cap.open((videoPath.toStdString().c_str()));
         bool haveMoreFrames{true};
         videoPlayback(haveMoreFrames);
     }
     else { // Webcam stream
-        cap.open(cameraID);
+        m_cap.open(cameraID);
         cameraStream();
     }
 
-    cap.release();
     running = false;
+    m_state = QMediaPlayer::StoppedState;
 }
 
 void CaptureThread::videoPlayback(bool& haveMoreFrames)
 {
-    qDebug() << "videoPlayback";
+    qDebug() << "videoPlayback()";
 
     QElapsedTimer timer;
 
     while (running && haveMoreFrames)
     {
         timer.restart();
-        haveMoreFrames = readNextVideoFrame();
+
+        if (m_state == QMediaPlayer::PlayingState){
+            haveMoreFrames = readNextVideoFrame();
+        }
         auto sleeptime = delay_ms - timer.elapsed();
         sleeptime = sleeptime < 0 ? 0 : sleeptime;
 
@@ -66,11 +69,11 @@ void CaptureThread::videoPlayback(bool& haveMoreFrames)
 void CaptureThread::cameraStream()
 {
 
-    qDebug() << "Is openned? "  << cap.isOpened();
+    qDebug() << "Is openned? "  << m_cap.isOpened();
     while(running) {
         QElapsedTimer timer;
         timer.start();
-        cap >> tmp_frame;
+        m_cap >> tmp_frame;
         if (tmp_frame.empty()) {
             qDebug() << "read frame - nothing";
             break;
@@ -105,7 +108,7 @@ void CaptureThread::cameraStream()
 
 bool CaptureThread::readNextVideoFrame()
 {
-    cap >> tmp_frame;
+    m_cap >> tmp_frame;
     if (tmp_frame.empty()) {
         qDebug() << "read frame - nothing";
         return false;
@@ -120,13 +123,62 @@ bool CaptureThread::readNextVideoFrame()
     }
 
 
-    emit frameCaptured(&frame, cap.get(cv::CAP_PROP_POS_FRAMES));
+    emit frameCaptured(&frame, m_cap.get(cv::CAP_PROP_POS_FRAMES));
     return true;
+}
+
+void CaptureThread::setState(QMediaPlayer::State state)
+{
+    m_state = state;
+    emit stateChanged(m_state);
 }
 
 void CaptureThread::play()
 {
     qDebug() << "CaptureThread::play()";
+    setState(QMediaPlayer::PlayingState);
+}
+
+void CaptureThread::pause()
+{
+    qDebug() << "CaptureThread::pause()";
+    setState(QMediaPlayer::PausedState);
+}
+
+void CaptureThread::next()
+{
+    qDebug() << "CaptureThread::next()";
+    // Pause and then move to the next frame
+    if (m_state != QMediaPlayer::PausedState)
+        setState(QMediaPlayer::PausedState);
+    readNextVideoFrame();
+}
+
+void CaptureThread::previous()
+{
+    qDebug() << "CaptureThread::previous(): " << m_state;
+
+    // Pause and then move to the next frame
+    if (m_state != QMediaPlayer::PausedState)
+        setState(QMediaPlayer::PausedState);
+
+    auto prev_frame_num = m_cap.get(cv::CAP_PROP_POS_FRAMES) - 2;
+    qDebug() << "CaptureThread::previous(): " << prev_frame_num << "  " << m_state;
+
+    if (prev_frame_num < 0)
+        prev_frame_num = 0;
+
+    m_cap.set(cv::CAP_PROP_POS_FRAMES, prev_frame_num);
+    readNextVideoFrame();
+}
+
+void CaptureThread::rateChanged(qreal new_rate)
+{
+    qDebug() << "  CaptureThread::rateChanged: " << new_rate;
+    if (new_rate > 0)
+        playback_fps = new_rate;
+
+    delay_ms = 1/playback_fps * 1000;
 }
 
 void CaptureThread::startCalcFPS(bool start)
