@@ -23,6 +23,25 @@ MainWindow::~MainWindow()
 {
 }
 
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    if (!capturer)
+        return;
+    switch (event->key()){
+    case Qt::Key_A:
+        capturer->previous();
+        break;
+    case Qt::Key_D:
+        capturer->next();
+        break;
+    case Qt::Key_Space:
+        capturer->togglePlayPause();
+    default:
+        break;
+    }
+
+    qDebug() << event->key();
+}
 void MainWindow::initUI()
 {
     qDebug() << "HERE";
@@ -39,9 +58,13 @@ void MainWindow::initUI()
     QGridLayout *main_layout = new QGridLayout();
     imageScene = new QGraphicsScene(this);
     imageView = new QGraphicsView(imageScene);
+    imageView->setFocusPolicy(Qt::StrongFocus);
     main_layout->addWidget(imageView, 0, 0, 12, 1);
 
-
+    // Set up table view
+    m_table = new StepTable();
+    main_layout->addWidget(m_table, 0, 1, 12, 2);
+    m_table->insertRow(5);
 
 //    monitorCheckBox = new QCheckBox(this);
 //    monitorCheckBox->setText("Monitor on/off");
@@ -50,24 +73,29 @@ void MainWindow::initUI()
 
 //    tool_layout->addWidget(new QLabel(this), 0, 2);
 
-    QBoxLayout *controlLayout = new QHBoxLayout;
+    QGridLayout *controlLayout = new QGridLayout();
     controlLayout->setContentsMargins(0, 0, 0, 0);
-    controlLayout->addStretch(1);
-    controlLayout->addWidget(controls);
-    controlLayout->addStretch(1);
+//    controlLayout->addStretch(1);
+    controlLayout->addWidget(controls, 0, 0, -1, -1);
+//    controlLayout->addStretch(1);
 
 
     // Set up the tools layout
     QGridLayout *tool_layout = new QGridLayout();
-    main_layout->addLayout(tool_layout, 12, 0, 1, -1);
-    findVideosButton = new QPushButton(this);
-    findVideosButton->setText("Open Videos");
-    tool_layout->addWidget(findVideosButton, 0, 0, 1, 1);
-    tool_layout->addLayout(controlLayout, 0, 4, 1, -1);
+    main_layout->addLayout(tool_layout, 12, 0, 1, 1);
+
+//    findVideosButton = new QPushButton(this);
+//    findVideosButton->setText("Open Videos");
+//    tool_layout->addWidget(findVideosButton, 0, 0, 1, 1);
+    tool_layout->addWidget(controls, 0, 0, 1, 1, Qt::AlignCenter);
+//    tool_layout->setColumnStretch(1, 100);
+//    tool_layout->addLayout(controlLayout, 0, 1, 1, 11);
+
+//    connect(findVideosButton, &QPushButton::pressed, this, &MainWindow::findVideos);
 
     // Set up list of saved videos
     saved_list = new QListView(this);
-    main_layout->addWidget(saved_list, 14, 0, 4, 1);
+    main_layout->addWidget(saved_list, 14, 0, 4, -1);
 
     QWidget *layout_widget = new QWidget(this);
     layout_widget->setLayout(main_layout);
@@ -80,7 +108,6 @@ void MainWindow::initUI()
     mainStatusBar->addPermanentWidget(mainStatusLabel);
     mainStatusLabel->setText("Gazer is Ready");
 
-    connect(findVideosButton, &QPushButton::pressed, this, &MainWindow::findVideos);
 
     createActions();
 
@@ -91,25 +118,37 @@ void MainWindow::createActions()
     cameraInfoAction = new QAction("Camera &Information", this);
     openCameraAction = new QAction("&Open Camera", this);
     exitAction = new QAction("E&xit", this);
+    openVidsAction = new QAction("Open Videos", this);
 
-    fileMenu->addAction(cameraInfoAction);
-    fileMenu->addAction(openCameraAction);
+//    fileMenu->addAction(cameraInfoAction);
+//    fileMenu->addAction(openCameraAction);
+
+    fileMenu->addAction(openVidsAction);
     fileMenu->addAction(exitAction);
 
-    // Set up the connections
+    // Set up the connections    
+    connect(openVidsAction, &QAction::triggered, this, &MainWindow::findVideos);
     connect(exitAction, &QAction::triggered, this, &QApplication::quit);
-    connect(cameraInfoAction, &QAction::triggered, this, &MainWindow::showCameraInfo);
-    connect(openCameraAction, &QAction::triggered, this, &MainWindow::openCamera);
+//    connect(cameraInfoAction, &QAction::triggered, this, &MainWindow::showCameraInfo);
+//    connect(openCameraAction, &QAction::triggered, this, &MainWindow::openCamera);
 
 
 }
 
 void MainWindow::connectPlaybackControls()
 {
+    connect(capturer, &CaptureThread::frameCaptured, this, &MainWindow::updateFrame);
+    connect(capturer, &CaptureThread::fpsChanged, this, &MainWindow::updateFPS);
+    connect(capturer, &CaptureThread::stateChanged, controls, &PlayerControls::setState);
+    connect(controls, &PlayerControls::changeRate, capturer, &CaptureThread::rateChanged);
+    connect(controls, &PlayerControls::changeFrame, capturer, &CaptureThread::frameChanged);
+
+
     connect(controls, &PlayerControls::play, capturer, &CaptureThread::play);
     connect(controls, &PlayerControls::pause, capturer, &CaptureThread::pause);
     connect(controls, &PlayerControls::next, capturer, &CaptureThread::next);
     connect(controls, &PlayerControls::previous, capturer, &CaptureThread::previous);
+    connect(controls, &PlayerControls::stop, capturer, &CaptureThread::stop);
 }
 
 void MainWindow::showCameraInfo()
@@ -198,10 +237,6 @@ void MainWindow::openCamera()
 
     int camera_ind = 0;
     capturer = new CaptureThread(camera_ind, data_lock,  controls->playbackRate());
-    connect(capturer, &CaptureThread::frameCaptured, this, &MainWindow::updateFrame);
-    connect(capturer, &CaptureThread::fpsChanged, this, &MainWindow::updateFPS);
-    connect(capturer, &CaptureThread::stateChanged, controls, &PlayerControls::setState);
-    connect(controls, &PlayerControls::changeRate, capturer, &CaptureThread::rateChanged);
 
     connectPlaybackControls();
     capturer->start();
@@ -220,14 +255,10 @@ void MainWindow::openVideo(QString video)
     }
 
     capturer = new CaptureThread(video, data_lock, controls->playbackRate());
-    connect(capturer, &CaptureThread::frameCaptured, this, &MainWindow::updateFrame);
-    connect(capturer, &CaptureThread::fpsChanged, this, &MainWindow::updateFPS);
-    connect(capturer, &CaptureThread::stateChanged, controls, &PlayerControls::setState);
-    connect(controls, &PlayerControls::changeRate, capturer, &CaptureThread::rateChanged);
 
     connectPlaybackControls();
     capturer->start();
-    capturer->startCalcFPS(true);
+    capturer->startCalcFPS(false);
     mainStatusLabel->setText(QString("Playing video from: %1").arg(video));
 }
 

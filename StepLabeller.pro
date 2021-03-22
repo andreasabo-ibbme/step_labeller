@@ -12,12 +12,14 @@ SOURCES += \
     capture_thread.cpp \
     main.cpp \
     mainwindow.cpp \
-    playercontrols.cpp
+    playercontrols.cpp \
+    steptable.cpp
 
 HEADERS += \
     capture_thread.h \
     mainwindow.h \
-    playercontrols.h
+    playercontrols.h \
+    steptable.h
 
 INCLUDEPATH += c:/opencv_build_release/install/include
 LIBS += c:/opencv_build_release/bin/libopencv_world451.dll

@@ -85,27 +85,15 @@ PlayerControls::PlayerControls(qreal fps_start, QWidget *parent)
 
     connect(m_previousButton, &QAbstractButton::clicked, this, &PlayerControls::previous);
 
-//    m_muteButton = new QToolButton(this);
-//    m_muteButton->setIcon(style()->standardIcon(QStyle::SP_MediaVolume));
-
-//    connect(m_muteButton, &QAbstractButton::clicked, this, &PlayerControls::muteClicked);
-
-//    m_volumeSlider = new QSlider(Qt::Horizontal, this);
-//    m_volumeSlider->setRange(0, 100);
-
-//    connect(m_volumeSlider, &QSlider::valueChanged, this, &PlayerControls::onVolumeSliderValueChanged);
-
-//    m_rateBox = new QComboBox(this);
-//    m_rateBox->addItem("0.5x", QVariant(0.5));
-//    m_rateBox->addItem("1.0x", QVariant(1.0));
-//    m_rateBox->addItem("2.0x", QVariant(2.0));
-//    m_rateBox->setCurrentIndex(1);
-    //    connect(m_rateBox, QOverload<int>::of(&QComboBox::activated), this, &PlayerControls::updateRate);
-
+    // FPS box
     m_fps_label = new QLabel(QString("FPS:"), this);
-
     m_fps_box = new QLineEdit(QString::number(m_playback_rate), this);
     connect(m_fps_box, &QLineEdit::editingFinished, this, &PlayerControls::updateRate);
+
+    // Frame box
+    m_frame_label = new QLabel(QString("Frame:"), this);
+    m_frame_box = new QLineEdit(this);
+    connect(m_frame_box, &QLineEdit::editingFinished, this, &PlayerControls::updateFrame);
 
     QBoxLayout *layout = new QHBoxLayout;
     layout->setContentsMargins(0, 0, 0, 0);
@@ -117,6 +105,8 @@ PlayerControls::PlayerControls(qreal fps_start, QWidget *parent)
 //    layout->addWidget(m_volumeSlider);
     layout->addWidget(m_fps_label);
     layout->addWidget(m_fps_box);
+    layout->addWidget(m_frame_label);
+    layout->addWidget(m_frame_box);
     setLayout(layout);
 }
 
@@ -210,19 +200,6 @@ qreal PlayerControls::playbackRate() const
     return m_playback_rate;
 }
 
-void PlayerControls::setPlaybackRate(float rate)
-{
-    for (int i = 0; i < m_rateBox->count(); ++i) {
-        if (qFuzzyCompare(rate, float(m_rateBox->itemData(i).toDouble()))) {
-            m_rateBox->setCurrentIndex(i);
-            return;
-        }
-    }
-
-    m_rateBox->addItem(QString("%1x").arg(rate), QVariant(rate));
-    m_rateBox->setCurrentIndex(m_rateBox->count() - 1);
-}
-
 void PlayerControls::updateRate()
 {
     m_playback_rate = m_fps_box->text().toDouble();
@@ -233,4 +210,11 @@ void PlayerControls::updateRate()
 void PlayerControls::onVolumeSliderValueChanged()
 {
     emit changeVolume(volume());
+}
+
+void PlayerControls::updateFrame()
+{
+    qint32 frame = m_frame_box->text().toInt();
+    qDebug() << "PlayerControls::updateFrame(): " << frame;
+    emit changeFrame(frame);
 }

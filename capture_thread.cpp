@@ -28,21 +28,17 @@ CaptureThread::~CaptureThread()
 void CaptureThread::run()
 {
     qDebug() << "CaptureThread::run()" << videoPath;
-
-    running = true;
-    setState(QMediaPlayer::PlayingState);
     if (cameraID < 0) { // Video playback
         m_cap.open((videoPath.toStdString().c_str()));
-        bool haveMoreFrames{true};
-        videoPlayback(haveMoreFrames);
     }
     else { // Webcam stream
         m_cap.open(cameraID);
-        cameraStream();
     }
+    running = true;
 
-    running = false;
-    m_state = QMediaPlayer::StoppedState;
+    exec();
+    qDebug() << "Done in run";
+
 }
 
 void CaptureThread::videoPlayback(bool& haveMoreFrames)
@@ -136,7 +132,15 @@ void CaptureThread::setState(QMediaPlayer::State state)
 void CaptureThread::play()
 {
     qDebug() << "CaptureThread::play()";
+//    exec();
     setState(QMediaPlayer::PlayingState);
+
+//    if (m_state == QMediaPlayer::StoppedState) {
+//        setState(QMediaPlayer::PlayingState);
+//        this->run();
+//    }
+//    setState(QMediaPlayer::PlayingState);
+
 }
 
 void CaptureThread::pause()
@@ -172,6 +176,13 @@ void CaptureThread::previous()
     readNextVideoFrame();
 }
 
+void CaptureThread::stop()
+{
+    m_cap.set(cv::CAP_PROP_POS_FRAMES, 0);
+    setState(QMediaPlayer::PausedState);
+    readNextVideoFrame();
+}
+
 void CaptureThread::rateChanged(qreal new_rate)
 {
     qDebug() << "  CaptureThread::rateChanged: " << new_rate;
@@ -181,11 +192,69 @@ void CaptureThread::rateChanged(qreal new_rate)
     delay_ms = 1/playback_fps * 1000;
 }
 
+void CaptureThread::frameChanged(qint32 frame)
+{
+    auto num_frames = m_cap.get(cv::CAP_PROP_FRAME_COUNT);
+    if (frame < 0 | frame > num_frames - 1)
+        return;
+
+    // Pause and then move to the frame
+    if (m_state != QMediaPlayer::PausedState)
+        setState(QMediaPlayer::PausedState);
+    m_cap.set(cv::CAP_PROP_POS_FRAMES, frame-1);
+    readNextVideoFrame();
+
+}
+
+void CaptureThread::togglePlayPause()
+{
+    if (m_state == QMediaPlayer::PlayingState)
+        pause();
+    else if (m_state == QMediaPlayer::PausedState)
+        play();
+    // TODO: How do we handle stopped state?
+}
+
 void CaptureThread::startCalcFPS(bool start)
 {
     fps_calculating = start;
     fps_sum = 0;
     cur_fps_sample_count = 0;
     time_samples.clear();
+}
+
+void CaptureThread::playVideo()
+{
+    qDebug() << "CaptureThread::playVideo()";
+    if (cameraID < 0)
+    { // Video playback
+        bool haveMoreFrames{true};
+        videoPlayback(haveMoreFrames);
+    }
+    else { // Webcam stream
+        cameraStream();
+    }
+}
+int CaptureThread::exec()
+{
+    setState(QMediaPlayer::PlayingState);
+    playVideo();
+    m_state = QMediaPlayer::StoppedState;
+    qDebug() << "Done in exec";
+
+    // Play the video once. Then pause for further instructions
+    // in exec loop
+    while (running) {
+        if (m_state == QMediaPlayer::PlayingState)
+        {
+            playVideo();
+        }
+
+        else {
+            msleep(delay_ms);
+        }
+    }
+
+    return 0;
 }
 

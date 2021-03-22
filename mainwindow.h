@@ -5,16 +5,19 @@
 #include <QCheckBox>
 #include <QGraphicsScene>
 #include <QGraphicsView>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QListView>
 #include <QMainWindow>
 #include <QMutex>
 #include <QPushButton>
 #include <QStatusBar>
+#include <QTableWidget>
 #include <QFileInfoList>
 
 #include "capture_thread.h"
 #include "playercontrols.h"
+#include "steptable.h"
 
 #include "opencv2/opencv.hpp"
 
@@ -26,12 +29,14 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+protected:
+    void keyPressEvent(QKeyEvent *event) override;
+
 private:
     void initUI();
     void createActions();
     void connectPlaybackControls();
     void connectCaptureControls();
-
 
 private slots:
     void showCameraInfo();
@@ -47,6 +52,7 @@ private:
     QAction *cameraInfoAction;
     QAction *openCameraAction;
     QAction *exitAction;
+    QAction *openVidsAction;
 
     QGraphicsScene *imageScene;
     QGraphicsView *imageView;
@@ -67,6 +73,7 @@ private:
     // To move to videolist widget
     QFileInfoList m_video_list;
 
+    StepTable *m_table;
 
 
 };
