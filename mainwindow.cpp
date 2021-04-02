@@ -11,12 +11,10 @@
 
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+    : QMainWindow(parent), capturer(nullptr), m_frameNum(0)
 {
     initUI();
     data_lock = new std::mutex;
-    capturer = nullptr;
-
 }
 
 MainWindow::~MainWindow()
@@ -36,6 +34,13 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         break;
     case Qt::Key_Space:
         capturer->togglePlayPause();
+        break;
+    case Qt::Key_E:
+        m_table->insertNewRightStep(m_frameNum);
+        break;
+    case Qt::Key_Q:
+        m_table->insertNewLeftStep(m_frameNum);
+        break;
     default:
         break;
     }
@@ -173,6 +178,7 @@ void MainWindow::updateFrame(cv::Mat* mat, qint64 frameNum)
         // Lock while updating the frame for display
         std::lock_guard<std::mutex> lock(*data_lock);
         currentFrame = *mat;
+        m_frameNum = frameNum;
     }
     QFont serifFont("Times", 16, QFont::Bold);
 

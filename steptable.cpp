@@ -5,12 +5,17 @@
 #include <QDebug>
 
 
-
 StepTable::StepTable(QWidget *parent) : QWidget(parent)
 {
-    m_table = new QTableWidget(12, 2, this);
 
-    m_table->setHorizontalHeaderLabels(QStringList() << "Left" << "Right");
+    // Initially the table is empty so initialize occupied position to reflect that
+    for (size_t i = 0; i < static_cast<qint64>(BodySide::COUNT); ++i){
+        m_lastOccupiedPosition.push_back(0);
+        m_heelStrikeList.push_back(QVector<qint64>());
+    }
+
+    m_table = new QTableWidget(1, static_cast<qint64>(BodySide::COUNT), this);
+    m_table->setHorizontalHeaderLabels(QStringList() << "Left" << "Right"); // TODO: use BodySide enum to assign header labels
 
     styleHeader();
 
@@ -20,12 +25,51 @@ StepTable::StepTable(QWidget *parent) : QWidget(parent)
     setLayout(layout);
 }
 
-void StepTable::insertRow(int row)
+void StepTable::insertRow(qint64 row)
 {
     qDebug() << "inserting row";
     m_table->insertRow(row);
-    auto tmp = new QTableWidgetItem(QString::number(row));
-    m_table->setItem(0, 1, std::move(tmp));
+}
+
+void StepTable::insertNewRightStep(qint64 frameNum)
+{
+    addStep(frameNum, BodySide::Right);
+}
+
+void StepTable::insertNewLeftStep(qint64 frameNum)
+{
+    addStep(frameNum, BodySide::Left);
+}
+
+void StepTable::addStep(qint64 frameNum, BodySide side) {
+    auto columnToInsertAt = static_cast<qint16>(side);
+    auto rowToInsertAt = m_lastOccupiedPosition[columnToInsertAt];
+
+    if (rowToInsertAt == m_table->rowCount())
+        insertRow(rowToInsertAt);
+
+    // This allows the underlying QVariant in QTableWidgetItem to keep track
+    // of the datatype rather than forcing a cast to QString.
+    // This allows us to use the default sorting
+    auto item = new QTableWidgetItem;
+    item->setData(Qt::EditRole, frameNum);
+    m_table->setItem(rowToInsertAt, columnToInsertAt, std::move(item));
+
+    m_heelStrikeList[columnToInsertAt].push_back(frameNum);
+
+    // Resort the column in a way that is independent from the others
+    std::sort(m_heelStrikeList[columnToInsertAt].begin(), m_heelStrikeList[columnToInsertAt].end());
+    for (auto row = 0; row <= rowToInsertAt; row++)
+    {
+        auto curItem = m_table->item(row, columnToInsertAt);
+        curItem->setData(Qt::EditRole, m_heelStrikeList[columnToInsertAt][row]);
+    }
+
+    m_lastOccupiedPosition[static_cast<qint16>(side)]++;
+    // TODO: make sure we don't insert duplicates
+
+    // TODO: Keep track of next location to insert at for each side.
+    // This will correct the current error when the difference in number of left/right steps is > 1
 }
 
 void StepTable::styleHeader()

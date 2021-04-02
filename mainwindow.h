@@ -74,7 +74,7 @@ private:
     QFileInfoList m_video_list;
 
     StepTable *m_table;
-
+    qint64 m_frameNum;
 
 };
 #endif // MAINWINDOW_H
