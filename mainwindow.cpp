@@ -230,6 +230,8 @@ void MainWindow::findVideos()
      else {
          // TODO: error handling if did not select dir correctly.
      }
+     qDebug() << "done in findVideos";
+
 }
 
 void MainWindow::openCamera()

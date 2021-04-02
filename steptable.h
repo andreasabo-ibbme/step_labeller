@@ -13,14 +13,18 @@ class StepTable : public QWidget
 public:
     explicit StepTable(QWidget *parent = nullptr);
 
+    ~StepTable();
 public slots:
-    void insertRow(qint64 row);
+    void insertRow(qint16 row);
     void insertNewRightStep(qint64 frameNum);
     void insertNewLeftStep(qint64 frameNum);
 
 private:
     void styleHeader();
     void addStep(qint64 frameNum, BodySide side);
+    void sortColumn(qint16 col);
+    bool alreadyInColumn (qint16 col, qint64 frameNum);
+
 private:
     QTableWidget *m_table;
     QVector<qint64> m_lastOccupiedPosition;

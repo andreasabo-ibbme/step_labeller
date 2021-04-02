@@ -25,7 +25,12 @@ StepTable::StepTable(QWidget *parent) : QWidget(parent)
     setLayout(layout);
 }
 
-void StepTable::insertRow(qint64 row)
+StepTable::~StepTable()
+{
+    delete m_table;
+}
+
+void StepTable::insertRow(qint16 row)
 {
     qDebug() << "inserting row";
     m_table->insertRow(row);
@@ -45,6 +50,10 @@ void StepTable::addStep(qint64 frameNum, BodySide side) {
     auto columnToInsertAt = static_cast<qint16>(side);
     auto rowToInsertAt = m_lastOccupiedPosition[columnToInsertAt];
 
+    // TODO: make sure we don't insert duplicates
+//    if (alreadyInColumn(columnToInsertAt, frameNum))
+//        return;
+
     if (rowToInsertAt == m_table->rowCount())
         insertRow(rowToInsertAt);
 
@@ -55,21 +64,33 @@ void StepTable::addStep(qint64 frameNum, BodySide side) {
     item->setData(Qt::EditRole, frameNum);
     m_table->setItem(rowToInsertAt, columnToInsertAt, std::move(item));
 
+    // Resort the current column independently from others
     m_heelStrikeList[columnToInsertAt].push_back(frameNum);
+//    sortColumn(columnToInsertAt);
 
+    m_lastOccupiedPosition[columnToInsertAt]++;
+
+}
+
+void StepTable::sortColumn(qint16 col)
+{
     // Resort the column in a way that is independent from the others
-    std::sort(m_heelStrikeList[columnToInsertAt].begin(), m_heelStrikeList[columnToInsertAt].end());
-    for (auto row = 0; row <= rowToInsertAt; row++)
+    std::sort(m_heelStrikeList[col].begin(), m_heelStrikeList[col].end());
+    for (auto row = 0; row <= m_heelStrikeList[col].size(); row++)
     {
-        auto curItem = m_table->item(row, columnToInsertAt);
-        curItem->setData(Qt::EditRole, m_heelStrikeList[columnToInsertAt][row]);
+        auto curItem = m_table->item(row, col);
+        curItem->setData(Qt::EditRole, m_heelStrikeList[col][row]);
     }
 
-    m_lastOccupiedPosition[static_cast<qint16>(side)]++;
-    // TODO: make sure we don't insert duplicates
+}
 
-    // TODO: Keep track of next location to insert at for each side.
-    // This will correct the current error when the difference in number of left/right steps is > 1
+bool StepTable::alreadyInColumn(qint16 col, qint64 frameNum)
+{
+    for (auto &a : m_heelStrikeList[col]) {
+        if (a == frameNum)
+            return true;
+    }
+    return false;
 }
 
 void StepTable::styleHeader()
