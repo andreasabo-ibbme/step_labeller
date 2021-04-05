@@ -23,6 +23,7 @@ StepTable::StepTable(QWidget *parent) : QWidget(parent)
     layout->addWidget(m_table, 0, 0);
     layout->setContentsMargins(0,0,0,0);
     setLayout(layout);
+    connect(m_table, &QTableWidget::itemChanged, this, &StepTable::handleCellChanged);
 }
 
 StepTable::~StepTable()
@@ -46,6 +47,25 @@ void StepTable::insertNewLeftStep(qint64 frameNum)
     addStep(frameNum, BodySide::Left);
 }
 
+void StepTable::handleCellChanged(QTableWidgetItem *item)
+{
+    qDebug()<< "handleCellChanged";
+
+    auto row = item->row();
+    auto col = item->column();
+    auto data = item->data(Qt::EditRole);
+
+    // Inserting a new entry
+    if (row > m_heelStrikeList[col].size()){
+        qDebug()<< "Added new entry";
+    }
+    else { // Modifying existing entry
+
+    }
+
+
+}
+
 void StepTable::addStep(qint64 frameNum, BodySide side) {
     auto columnToInsertAt = static_cast<qint16>(side);
     auto rowToInsertAt = m_lastOccupiedPosition[columnToInsertAt];
@@ -61,7 +81,6 @@ void StepTable::addStep(qint64 frameNum, BodySide side) {
 
     // This allows the underlying QVariant in QTableWidgetItem to keep track
     // of the datatype rather than forcing a cast to QString.
-    // This allows us to use the default sorting
     auto item = new QTableWidgetItem;
     item->setData(Qt::EditRole, frameNum);
     m_table->setItem(rowToInsertAt, columnToInsertAt, std::move(item));

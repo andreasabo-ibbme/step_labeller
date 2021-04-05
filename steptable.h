@@ -18,6 +18,7 @@ public slots:
     void insertRow(qint16 row);
     void insertNewRightStep(qint64 frameNum);
     void insertNewLeftStep(qint64 frameNum);
+    void handleCellChanged(QTableWidgetItem* item);
 
 private:
     void styleHeader();
