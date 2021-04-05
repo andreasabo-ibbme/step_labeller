@@ -51,8 +51,10 @@ void StepTable::addStep(qint64 frameNum, BodySide side) {
     auto rowToInsertAt = m_lastOccupiedPosition[columnToInsertAt];
 
     // TODO: make sure we don't insert duplicates
-//    if (alreadyInColumn(columnToInsertAt, frameNum))
-//        return;
+    if (alreadyInColumn(columnToInsertAt, frameNum)){
+        qDebug() << "Already have " << frameNum << " in table";
+        return;
+    }
 
     if (rowToInsertAt == m_table->rowCount())
         insertRow(rowToInsertAt);
@@ -66,7 +68,7 @@ void StepTable::addStep(qint64 frameNum, BodySide side) {
 
     // Resort the current column independently from others
     m_heelStrikeList[columnToInsertAt].push_back(frameNum);
-//    sortColumn(columnToInsertAt);
+    sortColumn(columnToInsertAt);
 
     m_lastOccupiedPosition[columnToInsertAt]++;
 
@@ -76,7 +78,7 @@ void StepTable::sortColumn(qint16 col)
 {
     // Resort the column in a way that is independent from the others
     std::sort(m_heelStrikeList[col].begin(), m_heelStrikeList[col].end());
-    for (auto row = 0; row <= m_heelStrikeList[col].size(); row++)
+    for (auto row = 0; row < m_heelStrikeList[col].size(); row++)
     {
         auto curItem = m_table->item(row, col);
         curItem->setData(Qt::EditRole, m_heelStrikeList[col][row]);
