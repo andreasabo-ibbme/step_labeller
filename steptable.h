@@ -23,13 +23,14 @@ public slots:
 private:
     void styleHeader();
     void addStep(qint64 frameNum, BodySide side);
+    void removeStep(qint16 row, qint16 col);
     void sortColumn(qint16 col);
     bool alreadyInColumn (qint16 col, qint64 frameNum);
 
-private:
     QTableWidget *m_table;
     QVector<qint64> m_lastOccupiedPosition;
     QVector<QVector<qint64>> m_heelStrikeList;
+    bool m_algorithmicStepAdd = false;
 };
 
 #endif // STEPTABLE_H

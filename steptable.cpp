@@ -17,12 +17,15 @@ StepTable::StepTable(QWidget *parent) : QWidget(parent)
     m_table = new QTableWidget(1, static_cast<qint64>(BodySide::COUNT), this);
     m_table->setHorizontalHeaderLabels(QStringList() << "Left" << "Right"); // TODO: use BodySide enum to assign header labels
 
+    // Fix the style of the header to be consistent with rest of the table
     styleHeader();
 
+    // Set layout for this widget
     QGridLayout *layout = new QGridLayout();
     layout->addWidget(m_table, 0, 0);
     layout->setContentsMargins(0,0,0,0);
     setLayout(layout);
+
     connect(m_table, &QTableWidget::itemChanged, this, &StepTable::handleCellChanged);
 }
 
@@ -33,7 +36,6 @@ StepTable::~StepTable()
 
 void StepTable::insertRow(qint16 row)
 {
-    qDebug() << "inserting row";
     m_table->insertRow(row);
 }
 
@@ -49,30 +51,67 @@ void StepTable::insertNewLeftStep(qint64 frameNum)
 
 void StepTable::handleCellChanged(QTableWidgetItem *item)
 {
-    qDebug()<< "handleCellChanged";
-
+    // This avoids infinite loop when the value in the table is changed
+    // without direct user intervention.
+    if (m_algorithmicStepAdd) {
+        return;
+    }
     auto row = item->row();
     auto col = item->column();
-    auto data = item->data(Qt::EditRole);
+    auto frame_num = item->data(Qt::EditRole);
+
+    // If the frame_num is empty, we want to delete the contents
+    if (item->text() == ""){
+        removeStep(row, col);
+        return;
+    }
+
+    if (!frame_num.toInt()) {
+        qDebug() << "Entry was not an integer";
+        // Remove the contents of the cell
+        item->setData(Qt::EditRole, "");
+        sortColumn(col);
+        return;
+    }
 
     // Inserting a new entry
-    if (row > m_heelStrikeList[col].size()){
-        qDebug()<< "Added new entry";
+    if (row >= m_heelStrikeList[col].size()){
+        addStep(frame_num.toInt(), BodySide(col));
     }
     else { // Modifying existing entry
+        // TODO: make sure we don't insert duplicates
+        if (alreadyInColumn(col, frame_num.toInt())){
+            qDebug() << "Already have " << frame_num << " in table";
+            return;
+        }
+
+        m_heelStrikeList[col][row] = frame_num.toInt();
+        sortColumn(col);
 
     }
 
 
+    // TODO: signal that can be accepted by mainwindow to change
+    // focus back to the playback window
+}
+
+void StepTable::removeStep(qint16 row, qint16 col){
+    // Can't delete if there isn't anything there to delete
+    if (row >= m_lastOccupiedPosition[col])
+        return;
+
+    m_heelStrikeList[col].remove(row);
+    m_lastOccupiedPosition[col]--;
+    sortColumn(col);
 }
 
 void StepTable::addStep(qint64 frameNum, BodySide side) {
+    m_algorithmicStepAdd = true;
     auto columnToInsertAt = static_cast<qint16>(side);
     auto rowToInsertAt = m_lastOccupiedPosition[columnToInsertAt];
 
     // TODO: make sure we don't insert duplicates
     if (alreadyInColumn(columnToInsertAt, frameNum)){
-        qDebug() << "Already have " << frameNum << " in table";
         return;
     }
 
@@ -91,6 +130,7 @@ void StepTable::addStep(qint64 frameNum, BodySide side) {
 
     m_lastOccupiedPosition[columnToInsertAt]++;
 
+    m_algorithmicStepAdd = false;
 }
 
 void StepTable::sortColumn(qint16 col)
@@ -102,7 +142,6 @@ void StepTable::sortColumn(qint16 col)
         auto curItem = m_table->item(row, col);
         curItem->setData(Qt::EditRole, m_heelStrikeList[col][row]);
     }
-
 }
 
 bool StepTable::alreadyInColumn(qint16 col, qint64 frameNum)
