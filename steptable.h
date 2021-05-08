@@ -6,7 +6,6 @@
 
 enum class BodySide {Left, Right, COUNT};
 
-
 class StepTable : public QWidget
 {
     Q_OBJECT
@@ -26,6 +25,7 @@ private:
     void removeStep(qint16 row, qint16 col);
     void sortColumn(qint16 col);
     bool alreadyInColumn (qint16 col, qint64 frameNum);
+
 
     QTableWidget *m_table;
     QVector<qint64> m_lastOccupiedPosition;

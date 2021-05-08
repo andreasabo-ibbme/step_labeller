@@ -64,43 +64,35 @@ void MainWindow::initUI()
     imageScene = new QGraphicsScene(this);
     imageView = new QGraphicsView(imageScene);
     imageView->setFocusPolicy(Qt::StrongFocus);
-    main_layout->addWidget(imageView, 0, 0, 12, 1);
+    main_layout->addWidget(imageView, 0, 1, 12, 5);
 
-    // Set up table view
+    // Set up step table view
     m_table = new StepTable();
-    main_layout->addWidget(m_table, 0, 1, 12, 2);
+    main_layout->addWidget(m_table, 0, 6, 12, 1);
     m_table->insertRow(5);
 
-//    monitorCheckBox = new QCheckBox(this);
-//    monitorCheckBox->setText("Monitor on/off");
-//    tool_layout->addWidget(monitorCheckBox, 0, 0);
+    // Set up file table view
+    m_fileTable = new FileTable();
+    main_layout->addWidget(m_fileTable, 0, 0, 12, 1);
+
+    // Set up step export
+    m_startExportButton = new QPushButton("Export steps", this);
+    main_layout->addWidget(m_startExportButton, 12, 1, 1, 2, Qt::AlignCenter);
+    connect(m_startExportButton, &QPushButton::clicked, this, &MainWindow::exportSteps);
 
 
-//    tool_layout->addWidget(new QLabel(this), 0, 2);
 
     QGridLayout *controlLayout = new QGridLayout();
     controlLayout->setContentsMargins(0, 0, 0, 0);
-//    controlLayout->addStretch(1);
     controlLayout->addWidget(controls, 0, 0, -1, -1);
-//    controlLayout->addStretch(1);
+
 
 
     // Set up the tools layout
     QGridLayout *tool_layout = new QGridLayout();
     main_layout->addLayout(tool_layout, 12, 0, 1, 1);
-
-//    findVideosButton = new QPushButton(this);
-//    findVideosButton->setText("Open Videos");
-//    tool_layout->addWidget(findVideosButton, 0, 0, 1, 1);
     tool_layout->addWidget(controls, 0, 0, 1, 1, Qt::AlignCenter);
-//    tool_layout->setColumnStretch(1, 100);
-//    tool_layout->addLayout(controlLayout, 0, 1, 1, 11);
 
-//    connect(findVideosButton, &QPushButton::pressed, this, &MainWindow::findVideos);
-
-    // Set up list of saved videos
-    saved_list = new QListView(this);
-    main_layout->addWidget(saved_list, 14, 0, 4, -1);
 
     QWidget *layout_widget = new QWidget(this);
     layout_widget->setLayout(main_layout);
@@ -112,7 +104,6 @@ void MainWindow::initUI()
     mainStatusLabel = new QLabel(mainStatusBar);
     mainStatusBar->addPermanentWidget(mainStatusLabel);
     mainStatusLabel->setText("Gazer is Ready");
-
 
     createActions();
 
@@ -268,6 +259,11 @@ void MainWindow::openVideo(QString video)
     capturer->start();
     capturer->startCalcFPS(false);
     mainStatusLabel->setText(QString("Playing video from: %1").arg(video));
+}
+
+void MainWindow::exportSteps()
+{
+    qDebug() << "ANDREA EXPORT STEPS";
 }
 
 

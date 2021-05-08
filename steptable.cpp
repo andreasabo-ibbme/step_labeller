@@ -7,7 +7,6 @@
 
 StepTable::StepTable(QWidget *parent) : QWidget(parent)
 {
-
     // Initially the table is empty so initialize occupied position to reflect that
     for (size_t i = 0; i < static_cast<qint64>(BodySide::COUNT); ++i){
         m_lastOccupiedPosition.push_back(0);
@@ -31,7 +30,7 @@ StepTable::StepTable(QWidget *parent) : QWidget(parent)
 
 StepTable::~StepTable()
 {
-    delete m_table;
+    delete m_table; // Not needed because we set parent this this when creating the table
 }
 
 void StepTable::insertRow(qint16 row)

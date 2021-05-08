@@ -85,6 +85,7 @@ PlayerControls::PlayerControls(qreal fps_start, QWidget *parent)
 
     connect(m_previousButton, &QAbstractButton::clicked, this, &PlayerControls::previous);
 
+
     // FPS box
     m_fps_label = new QLabel(QString("FPS:"), this);
     m_fps_box = new QLineEdit(QString::number(m_playback_rate), this);

@@ -16,6 +16,7 @@
 #include <QFileInfoList>
 
 #include "capture_thread.h"
+#include "filetable.h"
 #include "playercontrols.h"
 #include "steptable.h"
 
@@ -45,6 +46,7 @@ private slots:
     void updateFPS(float fps);
     void findVideos();
     void openVideo(QString video);
+    void exportSteps();
 
 
 private:
@@ -59,6 +61,7 @@ private:
 
     QCheckBox *monitorCheckBox;
     QPushButton *findVideosButton;
+    QPushButton *m_startExportButton;
 
     QListView *saved_list;
 
@@ -74,6 +77,7 @@ private:
     QFileInfoList m_video_list;
 
     StepTable *m_table;
+    FileTable *m_fileTable;
     qint64 m_frameNum;
 
 };

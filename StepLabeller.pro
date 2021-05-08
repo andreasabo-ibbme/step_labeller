@@ -10,6 +10,7 @@ CONFIG += c++11
 
 SOURCES += \
     capture_thread.cpp \
+    filetable.cpp \
     main.cpp \
     mainwindow.cpp \
     playercontrols.cpp \
@@ -17,6 +18,7 @@ SOURCES += \
 
 HEADERS += \
     capture_thread.h \
+    filetable.h \
     mainwindow.h \
     playercontrols.h \
     steptable.h
