@@ -59,44 +59,56 @@ void MainWindow::initUI()
     // Set up the menubar
     fileMenu = menuBar()->addMenu("&File");
 
-    // Set up the playback area
     QGridLayout *main_layout = new QGridLayout();
+
+
+    // Set up the playback area
     imageScene = new QGraphicsScene(this);
     imageView = new QGraphicsView(imageScene);
     imageView->setFocusPolicy(Qt::StrongFocus);
-    main_layout->addWidget(imageView, 0, 1, 12, 5);
+//    main_layout->addWidget(imageView, 0, 1, 12, 5);
 
-    // Set up step table view
-    m_table = new StepTable();
-    main_layout->addWidget(m_table, 0, 6, 12, 1);
-    m_table->insertRow(5);
+
+
+    // Set up file table view
+//    m_fileTable = new FileTable();
+//    main_layout->addWidget(m_fileTable, 0, 0, 12, 1);
+
+    // Set up step export
+//    m_startExportButton = new QPushButton("Export steps", this);
+//    main_layout->addWidget(m_startExportButton, 12, 1, 1, 2, Qt::AlignCenter);
+//    connect(m_startExportButton, &QPushButton::clicked, this, &MainWindow::exportSteps);
+
 
     // Set up file table view
     m_fileTable = new FileTable();
-    main_layout->addWidget(m_fileTable, 0, 0, 12, 1);
-
-    // Set up step export
-    m_startExportButton = new QPushButton("Export steps", this);
-    main_layout->addWidget(m_startExportButton, 12, 1, 1, 2, Qt::AlignCenter);
-    connect(m_startExportButton, &QPushButton::clicked, this, &MainWindow::exportSteps);
+    main_layout->addWidget(m_fileTable, 0, 0, 10, 2);
 
 
+    // Set up playback window and controls
+    main_layout->addWidget(imageView, 0, 2, 10, 5);
+    main_layout->addWidget(controls, 10, 2, 1, 5);
 
-    QGridLayout *controlLayout = new QGridLayout();
-    controlLayout->setContentsMargins(0, 0, 0, 0);
-    controlLayout->addWidget(controls, 0, 0, -1, -1);
+    // Set up step table view
+    m_table = new StepTable();
+    main_layout->addWidget(m_table, 0, 7, 10, 2);
 
 
 
-    // Set up the tools layout
-    QGridLayout *tool_layout = new QGridLayout();
-    main_layout->addLayout(tool_layout, 12, 0, 1, 1);
-    tool_layout->addWidget(controls, 0, 0, 1, 1, Qt::AlignCenter);
-
-
+    // Set the layout for the main window
     QWidget *layout_widget = new QWidget(this);
     layout_widget->setLayout(main_layout);
     setCentralWidget(layout_widget);
+
+
+    // Set up the tools layout
+//    QGridLayout *tool_layout = new QGridLayout();
+//    main_layout->addLayout(tool_layout, 12, 0, 1, 1);
+//    tool_layout->addWidget(controls, 0, 0, 1, 1, Qt::AlignCenter);
+
+//    main_layout->addLayout(videoPlaybackLayout, 0, 0);
+
+
 
 
     // Set up the status bar

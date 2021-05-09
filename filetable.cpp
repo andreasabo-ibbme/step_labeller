@@ -11,6 +11,7 @@ FileTable::FileTable(QWidget *parent) : QWidget(parent)
 
     // Fix the style of the header to be consistent with rest of the table
     styleHeader();
+    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch );
 
     // Set layout for this widget
     QGridLayout *layout = new QGridLayout();
