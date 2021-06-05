@@ -80,5 +80,7 @@ private:
     FileTable *m_fileTable;
     qint64 m_frameNum;
 
+    QString m_footfall_path;
+    QString m_outputStepFormat;
 };
 #endif // MAINWINDOW_H

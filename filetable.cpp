@@ -3,6 +3,7 @@
 #include <QGridLayout>
 #include <QHeaderView>
 #include <QDebug>
+#include <QDir>
 
 FileTable::FileTable(QWidget *parent) : QWidget(parent), m_lastOccupiedPosition{}
 {
@@ -21,22 +22,43 @@ FileTable::FileTable(QWidget *parent) : QWidget(parent), m_lastOccupiedPosition{
 
 }
 
-void FileTable::fillTableWithFiles(QFileInfoList files)
+void FileTable::fillTableWithFiles(QFileInfoList files, QString footfallFolder, QString stepFormat)
 {
     auto columnToInsertAt = static_cast<qint16>(FileTableRowName::FileName);
 
      for (auto &file : files) {
-         auto new_item = new QTableWidgetItem(file.completeBaseName());
+         auto curFileName = file.completeBaseName();
+         auto new_item = new QTableWidgetItem(curFileName);
 
          if (m_lastOccupiedPosition == m_table->rowCount())
              m_table->insertRow(m_lastOccupiedPosition);
 
-         m_table->setItem(m_lastOccupiedPosition++, columnToInsertAt, std::move(new_item));
+         m_table->setItem(m_lastOccupiedPosition, columnToInsertAt, std::move(new_item));
+
+         // Update label status
+         setLabelStatus(m_lastOccupiedPosition, footfallFolder, stepFormat);
+         m_lastOccupiedPosition++;
      }
 }
 
+void FileTable::setLabelStatus(qint64 rowToInsertAt, QString footfallFolder, QString stepFormat)
+{
+    auto testIcon = this->style()->standardIcon(QStyle::SP_DialogCancelButton);
+
+    auto fileCol = static_cast<qint16>(FileTableRowName::FileName);
+    auto statusCol = static_cast<qint16>(FileTableRowName::StepStatus);
+
+    auto curFileName = m_table->item(rowToInsertAt, fileCol)->data(Qt::EditRole);
+    auto footfallFileName = QDir(footfallFolder).filePath(curFileName.toString() + stepFormat);
 
 
+    if (QFile::exists(footfallFileName))
+        testIcon = this->style()->standardIcon(QStyle::SP_DialogApplyButton);
+
+    auto new_item = new QTableWidgetItem(testIcon, "");
+    m_table->setItem(rowToInsertAt, statusCol, std::move(new_item));
+
+}
 
 void FileTable::styleHeader()
 {

@@ -14,10 +14,10 @@ public:
     explicit FileTable(QWidget *parent = nullptr);
 
 public slots:
-    void fillTableWithFiles(QFileInfoList files);
+    void fillTableWithFiles(QFileInfoList files, QString footfallFolder, QString stepFormat);
 
-signals:
-
+private:
+    void setLabelStatus(qint64 rowToInsertAt, QString footfallFolder, QString stepFormat);
 
 private:
     void styleHeader();

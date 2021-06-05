@@ -15,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     initUI();
     data_lock = new std::mutex;
+    m_outputStepFormat = ".csv";
 }
 
 MainWindow::~MainWindow()
@@ -215,6 +216,7 @@ void MainWindow::updateFPS(float fps)
 
 void MainWindow::findVideos()
 {
+    QString default_footfall = "footfalls";
     QFileDialog dialog(this);
     dialog.setFileMode(QFileDialog::Directory);
     dialog.setViewMode(QFileDialog::Detail);
@@ -223,13 +225,17 @@ void MainWindow::findVideos()
      if (dialog.exec())
      {
          dirName = dialog.selectedFiles();
-         qDebug() << dirName;
          auto myDir = QDir(dirName.at(0));
+
          QFileInfoList list = myDir.entryInfoList(QDir::Files);
-         qDebug() << list;
+
+         // Set default footfall path
+         m_footfall_path = myDir.filePath(default_footfall);
          m_video_list = list;
-         m_fileTable->fillTableWithFiles(m_video_list);
-         openVideo((m_video_list[0]).absoluteFilePath());
+         m_fileTable->fillTableWithFiles(m_video_list, m_footfall_path, m_outputStepFormat);
+
+         // TODO: Signal from FileTable for which video to play -> make openVideo into slot
+//         openVideo((m_video_list[0]).absoluteFilePath());
      }
      else {
          // TODO: error handling if did not select dir correctly.
@@ -276,6 +282,7 @@ void MainWindow::openVideo(QString video)
 
 void MainWindow::exportSteps()
 {
+    // TODO:
     qDebug() << "ANDREA EXPORT STEPS";
 }
 
