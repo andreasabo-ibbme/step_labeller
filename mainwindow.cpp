@@ -228,6 +228,7 @@ void MainWindow::findVideos()
          QFileInfoList list = myDir.entryInfoList(QDir::Files);
          qDebug() << list;
          m_video_list = list;
+         m_fileTable->fillTableWithFiles(m_video_list);
          openVideo((m_video_list[0]).absoluteFilePath());
      }
      else {

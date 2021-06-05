@@ -3,9 +3,9 @@
 
 #include <QWidget>
 #include <QTableWidget>
+#include <QFileInfoList>
 
 enum class FileTableRowName {FileName, StepStatus, COUNT};
-
 
 class FileTable : public QWidget
 {
@@ -13,12 +13,16 @@ class FileTable : public QWidget
 public:
     explicit FileTable(QWidget *parent = nullptr);
 
+public slots:
+    void fillTableWithFiles(QFileInfoList files);
+
 signals:
 
 
 private:
     void styleHeader();
     QTableWidget *m_table;
+    qint64 m_lastOccupiedPosition;
 };
 
 #endif // FILETABLE_H

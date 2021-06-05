@@ -4,7 +4,7 @@
 #include <QHeaderView>
 #include <QDebug>
 
-FileTable::FileTable(QWidget *parent) : QWidget(parent)
+FileTable::FileTable(QWidget *parent) : QWidget(parent), m_lastOccupiedPosition{}
 {
     m_table = new QTableWidget(1, static_cast<qint64>(FileTableRowName::COUNT), this);
     m_table->setHorizontalHeaderLabels(QStringList() << "File Name" << "Have Exported Steps?"); // TODO: use FileTableRowName enum to assign header labels
@@ -20,6 +20,23 @@ FileTable::FileTable(QWidget *parent) : QWidget(parent)
     setLayout(layout);
 
 }
+
+void FileTable::fillTableWithFiles(QFileInfoList files)
+{
+    auto columnToInsertAt = static_cast<qint16>(FileTableRowName::FileName);
+
+     for (auto &file : files) {
+         auto new_item = new QTableWidgetItem(file.completeBaseName());
+
+         if (m_lastOccupiedPosition == m_table->rowCount())
+             m_table->insertRow(m_lastOccupiedPosition);
+
+         m_table->setItem(m_lastOccupiedPosition++, columnToInsertAt, std::move(new_item));
+     }
+}
+
+
+
 
 void FileTable::styleHeader()
 {
