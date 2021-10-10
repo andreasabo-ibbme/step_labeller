@@ -141,7 +141,7 @@ void MainWindow::createActions()
 //    connect(cameraInfoAction, &QAction::triggered, this, &MainWindow::showCameraInfo);
 //    connect(openCameraAction, &QAction::triggered, this, &MainWindow::openCamera);
 
-
+    connect(m_fileTable, &FileTable::playVideoByName, this, &MainWindow::openVideo);
 }
 
 void MainWindow::connectPlaybackControls()
@@ -158,6 +158,11 @@ void MainWindow::connectPlaybackControls()
     connect(controls, &PlayerControls::next, capturer, &CaptureThread::next);
     connect(controls, &PlayerControls::previous, capturer, &CaptureThread::previous);
     connect(controls, &PlayerControls::stop, capturer, &CaptureThread::stop);
+}
+
+void MainWindow::changeVideo(QString video)
+{
+
 }
 
 void MainWindow::showCameraInfo()
@@ -227,18 +232,17 @@ void MainWindow::findVideos()
          dirName = dialog.selectedFiles();
          auto myDir = QDir(dirName.at(0));
 
-         QFileInfoList list = myDir.entryInfoList(QDir::Files);
+         m_video_list = myDir.entryInfoList(QDir::Files);
 
          // Set default footfall path
          m_footfall_path = myDir.filePath(default_footfall);
-         m_video_list = list;
-         m_fileTable->fillTableWithFiles(m_video_list, m_footfall_path, m_outputStepFormat);
+         m_fileTable->fillTableWithFiles(m_video_list, m_footfall_path, myDir, m_outputStepFormat);
 
-         // TODO: Signal from FileTable for which video to play -> make openVideo into slot
-//         openVideo((m_video_list[0]).absoluteFilePath());
+         // Automatically start playing the first video in the list
+         openVideo((m_video_list[0]).absoluteFilePath());
      }
      else {
-         // TODO: error handling if did not select dir correctly.
+         // TODO: error handling if did not select dir correctly. IE. non-playable files in folder
      }
      qDebug() << "done in findVideos";
 
@@ -256,6 +260,7 @@ void MainWindow::openCamera()
     int camera_ind = 0;
     capturer = new CaptureThread(camera_ind, data_lock,  controls->playbackRate());
 
+    // Needs the newly created capture thread
     connectPlaybackControls();
     capturer->start();
     capturer->startCalcFPS(true);

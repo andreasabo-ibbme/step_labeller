@@ -39,6 +39,9 @@ private:
     void connectPlaybackControls();
     void connectCaptureControls();
 
+public slots:
+    void changeVideo(QString video);
+
 private slots:
     void showCameraInfo();
     void openCamera();
