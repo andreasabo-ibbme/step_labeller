@@ -28,7 +28,7 @@ void FileTable::fillTableWithFiles(QFileInfoList files, QString footfallFolder, 
     // Remove all contents before trying to add
     m_lastOccupiedPosition = 0;
     m_table->setRowCount(0);
-
+    m_footfall_folder = footfallFolder;
     m_rootFolder = videoFolder;
     m_stepFormat = stepFormat;
     // Add new items
@@ -44,7 +44,7 @@ void FileTable::fillTableWithFiles(QFileInfoList files, QString footfallFolder, 
          m_table->setItem(m_lastOccupiedPosition, columnToInsertAt, std::move(new_item));
 
          // Update label status
-         setLabelStatus(m_lastOccupiedPosition, footfallFolder, stepFormat);
+         setLabelStatus(m_lastOccupiedPosition, stepFormat);
          m_lastOccupiedPosition++;
     }
 }
@@ -61,9 +61,10 @@ void FileTable::handleItemDoubleClicked(QTableWidgetItem *item)
     QString localPath = item->data(Qt::EditRole).toString();
     QString videoName = m_rootFolder.filePath(localPath);
     emit playVideoByName(videoName);
+    emit sendFootfallOutputMetaData(m_rootFolder.filePath(m_footfall_folder), QFileInfo(localPath).completeBaseName() + m_stepFormat);
 }
 
-void FileTable::setLabelStatus(qint64 rowToInsertAt, QString footfallFolder, QString stepFormat)
+void FileTable::setLabelStatus(qint64 rowToInsertAt, QString stepFormat)
 {
     auto testIcon = this->style()->standardIcon(QStyle::SP_DialogCancelButton);
 
@@ -71,10 +72,11 @@ void FileTable::setLabelStatus(qint64 rowToInsertAt, QString footfallFolder, QSt
     auto statusCol = static_cast<qint16>(FileTableRowName::StepStatus);
 
     auto curFileName = m_table->item(rowToInsertAt, fileCol)->data(Qt::EditRole);
-    auto footfallFileName = QDir(footfallFolder).filePath(curFileName.toString() + stepFormat);
+    QFileInfo footfallFileInfo = QFileInfo(QDir(m_footfall_folder), curFileName.toString() + stepFormat);
+//    auto /*footfallFileName*/ = QDir(footfallFolder).filePath(curFileName.toString() + stepFormat);
 
 
-    if (QFile::exists(footfallFileName))
+    if (footfallFileInfo.exists())
         testIcon = this->style()->standardIcon(QStyle::SP_DialogApplyButton);
 
     auto new_item = new QTableWidgetItem(testIcon, "");

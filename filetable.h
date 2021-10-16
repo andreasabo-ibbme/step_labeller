@@ -16,6 +16,7 @@ public:
 
 signals:
     void playVideoByName(QString video);
+    void sendFootfallOutputMetaData(QDir m_rootFolder, QString outputFile);
 
 public slots:
     void fillTableWithFiles(QFileInfoList files, QString footfallFolder, QDir videoFolder, QString stepFormat);
@@ -24,13 +25,14 @@ private slots:
     void handleItemDoubleClicked(QTableWidgetItem *item);
 
 private:
-    void setLabelStatus(qint64 rowToInsertAt, QString footfallFolder, QString stepFormat);
+    void setLabelStatus(qint64 rowToInsertAt, QString stepFormat);
 
 private:
     void styleHeader();
     QTableWidget *m_table;
     qint64 m_lastOccupiedPosition;
     QDir m_rootFolder;
+    QString m_footfall_folder;
     QString m_stepFormat;
 };
 

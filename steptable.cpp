@@ -79,7 +79,6 @@ void StepTable::handleCellChanged(QTableWidgetItem *item)
         addStep(frame_num.toInt(), BodySide(col));
     }
     else { // Modifying existing entry
-        // TODO: make sure we don't insert duplicates
         if (alreadyInColumn(col, frame_num.toInt())){
             qDebug() << "Already have " << frame_num << " in table";
             return;
@@ -90,9 +89,34 @@ void StepTable::handleCellChanged(QTableWidgetItem *item)
 
     }
 
-
     // TODO: signal that can be accepted by mainwindow to change
     // focus back to the playback window
+}
+
+void StepTable::saveFootfalls()
+{
+    // Make sure the target folder exists (keep here because this is a public function)
+    if (!m_outputFolder.exists()) {
+        m_outputFolder.mkdir(".");
+    }
+
+    qDebug() << "saving to file " << m_outputFile;
+}
+
+void StepTable::resetForNext(QDir output_dir, QString output_file)
+{
+    // TODO: save to file
+
+    // TODO: Reset footfall table
+
+    // Extract the parts of the video name
+
+    m_outputFile = output_file;
+    m_outputFolder = output_dir;
+//    qDebug() << "StepTable::resetForNext: m_outputFolder " << m_outputFolder;
+//    qDebug() << "StepTable::resetForNext: m_outputFile " << m_outputFile;
+
+    // TODO: Load footfalls if available
 }
 
 void StepTable::removeStep(qint16 row, qint16 col){
@@ -135,6 +159,7 @@ void StepTable::addStep(qint64 frameNum, BodySide side) {
 
 void StepTable::sortColumn(qint16 col)
 {
+    qDebug() << "we are sorting: " << col;
     // Resort the column in a way that is independent from the others
     std::sort(m_heelStrikeList[col].begin(), m_heelStrikeList[col].end());
     for (auto row = 0; row < m_heelStrikeList[col].size(); row++)

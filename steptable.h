@@ -1,8 +1,10 @@
 #ifndef STEPTABLE_H
 #define STEPTABLE_H
 
-#include <QWidget>
+#include <QDir>
 #include <QTableWidget>
+#include <QWidget>
+
 
 enum class BodySide {Left, Right, COUNT};
 
@@ -18,6 +20,8 @@ public slots:
     void insertNewRightStep(qint64 frameNum);
     void insertNewLeftStep(qint64 frameNum);
     void handleCellChanged(QTableWidgetItem* item);
+    void saveFootfalls();
+    void resetForNext(QDir m_rootFolder, QString outputFile);
 
 private:
     void styleHeader();
@@ -27,6 +31,8 @@ private:
     bool alreadyInColumn (qint16 col, qint64 frameNum);
 
 
+    QString m_outputFile;
+    QDir m_outputFolder;
     QTableWidget *m_table;
     QVector<qint64> m_lastOccupiedPosition;
     QVector<QVector<qint64>> m_heelStrikeList;

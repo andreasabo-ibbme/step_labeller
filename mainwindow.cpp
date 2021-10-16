@@ -116,7 +116,7 @@ void MainWindow::initUI()
     mainStatusBar = statusBar();
     mainStatusLabel = new QLabel(mainStatusBar);
     mainStatusBar->addPermanentWidget(mainStatusLabel);
-    mainStatusLabel->setText("Gazer is Ready");
+    mainStatusLabel->setText("Labeller is Ready");
 
     createActions();
 
@@ -142,6 +142,7 @@ void MainWindow::createActions()
 //    connect(openCameraAction, &QAction::triggered, this, &MainWindow::openCamera);
 
     connect(m_fileTable, &FileTable::playVideoByName, this, &MainWindow::openVideo);
+    connect(m_fileTable, &FileTable::sendFootfallOutputMetaData, m_table, &StepTable::resetForNext);
 }
 
 void MainWindow::connectPlaybackControls()
