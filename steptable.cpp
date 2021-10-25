@@ -14,8 +14,12 @@ StepTable::StepTable(QWidget *parent) : QWidget(parent)
     }
 
     m_table = new QTableWidget(1, static_cast<qint64>(BodySide::COUNT), this);
-    m_table->setHorizontalHeaderLabels(QStringList() << "Left" << "Right"); // TODO: use BodySide enum to assign header labels
-
+    // Dynamically setting column names
+    QStringList colLabels;
+    for (auto& side: m_sides) {
+        colLabels << side;
+    }
+    m_table->setHorizontalHeaderLabels(colLabels);
     // Fix the style of the header to be consistent with rest of the table
     styleHeader();
     m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch );
@@ -93,7 +97,7 @@ void StepTable::handleCellChanged(QTableWidgetItem *item)
     // focus back to the playback window
 }
 
-void StepTable::saveFootfalls()
+bool StepTable::saveFootfalls()
 {
     // Make sure the target folder exists (keep here because this is a public function)
     if (!m_outputFolder.exists()) {
@@ -101,11 +105,16 @@ void StepTable::saveFootfalls()
     }
 
     qDebug() << "saving to file " << m_outputFile;
+    return writeToCSV();
+
+
 }
 
 void StepTable::resetForNext(QDir output_dir, QString output_file)
 {
     // TODO: save to file
+    auto success = saveFootfalls();
+    // TODO: How to handle failure
 
     // TODO: Reset footfall table
 
@@ -176,6 +185,57 @@ bool StepTable::alreadyInColumn(qint16 col, qint64 frameNum)
             return true;
     }
     return false;
+}
+
+bool StepTable::writeToCSV()
+{
+    try {
+        // https://stackoverflow.com/questions/27353026/qtableview-output-save-as-csv-or-txt
+        qDebug() << "Writing to CSV: " << m_outputFile;
+
+        // Format the header
+        QString outputData;
+        for (auto& heading: m_sides) {
+            outputData += heading + ",";
+        }
+        outputData.chop(1);
+        outputData += "\n";
+
+
+        // Format the data string
+        auto maxRows = *std::max_element(m_lastOccupiedPosition.constBegin(), m_lastOccupiedPosition.constEnd());
+        for (int row = 0; row < maxRows; row++) {
+            for (int col = 0; col < m_heelStrikeList.size(); col++) {
+                // Extract data if we have it, or just output empty cell
+
+                if (m_heelStrikeList[col].size() > row) {
+                    outputData += QString::number(m_heelStrikeList[col][row]) + ",";
+                }
+                else {
+                    outputData += ",";
+                }
+
+            }
+            outputData.chop(1);
+            outputData += "\n";
+        }
+
+        // Write to file
+        QString outputPath = m_outputFolder.filePath(m_outputFile);
+        QFile csvFile(outputPath);
+        if(csvFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+
+            QTextStream out(&csvFile);
+            out << outputData;
+
+            csvFile.close();
+        }
+        return true;
+    }
+    catch (...) {
+        // Failed to write to file
+        return false;
+    }
 }
 
 void StepTable::styleHeader()

@@ -20,7 +20,7 @@ public slots:
     void insertNewRightStep(qint64 frameNum);
     void insertNewLeftStep(qint64 frameNum);
     void handleCellChanged(QTableWidgetItem* item);
-    void saveFootfalls();
+    bool saveFootfalls();
     void resetForNext(QDir m_rootFolder, QString outputFile);
 
 private:
@@ -30,6 +30,8 @@ private:
     void sortColumn(qint16 col);
     bool alreadyInColumn (qint16 col, qint64 frameNum);
 
+    bool writeToCSV();
+
 
     QString m_outputFile;
     QDir m_outputFolder;
@@ -37,6 +39,8 @@ private:
     QVector<qint64> m_lastOccupiedPosition;
     QVector<QVector<qint64>> m_heelStrikeList;
     bool m_algorithmicStepAdd = false;
+    QVector<QString> m_sides{"Left", "Right"};
+
 };
 
 #endif // STEPTABLE_H
