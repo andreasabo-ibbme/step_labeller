@@ -14,6 +14,7 @@ FileTable::FileTable(QWidget *parent) : QWidget(parent), m_lastOccupiedPosition{
     styleHeader();
     m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch );
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
     // Set layout for this widget
     QGridLayout *layout = new QGridLayout();
     layout->addWidget(m_table, 0, 0);
@@ -72,12 +73,13 @@ void FileTable::setLabelStatus(qint64 rowToInsertAt, QString stepFormat)
     auto statusCol = static_cast<qint16>(FileTableRowName::StepStatus);
 
     auto curFileName = m_table->item(rowToInsertAt, fileCol)->data(Qt::EditRole);
-    QFileInfo footfallFileInfo = QFileInfo(QDir(m_footfall_folder), curFileName.toString() + stepFormat);
+    QFileInfo footfallFileInfo = QFileInfo(QDir(m_footfall_folder), QFileInfo(curFileName.toString()).completeBaseName() + stepFormat);
 //    auto /*footfallFileName*/ = QDir(footfallFolder).filePath(curFileName.toString() + stepFormat);
 
 
-    if (footfallFileInfo.exists())
+    if (footfallFileInfo.exists()) {
         testIcon = this->style()->standardIcon(QStyle::SP_DialogApplyButton);
+    }
 
     auto new_item = new QTableWidgetItem(testIcon, "");
     m_table->setItem(rowToInsertAt, statusCol, std::move(new_item));
