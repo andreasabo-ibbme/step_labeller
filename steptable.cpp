@@ -1,5 +1,6 @@
 #include "steptable.h"
 
+#include <numeric>
 #include <QGridLayout>
 #include <QHeaderView>
 #include <QDebug>
@@ -114,16 +115,14 @@ void StepTable::resetForNext(QDir output_dir, QString output_file)
 {
     // TODO: save to file
     auto success = saveFootfalls();
+
     // TODO: How to handle failure
 
     // TODO: Reset footfall table
 
-    // Extract the parts of the video name
-
+    // Extract the parts of the new video name
     m_outputFile = output_file;
     m_outputFolder = output_dir;
-//    qDebug() << "StepTable::resetForNext: m_outputFolder " << m_outputFolder;
-//    qDebug() << "StepTable::resetForNext: m_outputFile " << m_outputFile;
 
     // TODO: Load footfalls if available
 }
@@ -162,7 +161,6 @@ void StepTable::addStep(qint64 frameNum, BodySide side) {
     sortColumn(columnToInsertAt);
 
     m_lastOccupiedPosition[columnToInsertAt]++;
-
     m_algorithmicStepAdd = false;
 }
 
@@ -187,50 +185,76 @@ bool StepTable::alreadyInColumn(qint16 col, qint64 frameNum)
     return false;
 }
 
+QVector<QString> StepTable::formatStepsForCSV()
+{
+    // Format the header
+    QString headerData;
+    for (auto& heading: m_sides) {
+        headerData += heading + ",";
+    }
+    headerData.chop(1); // Remove the last comma and replace with a newline
+    headerData += "\n";
+
+
+    // Format the data string
+    auto maxRows = *std::max_element(m_lastOccupiedPosition.constBegin(), m_lastOccupiedPosition.constEnd());
+    QVector<QString> outputVec;
+    outputVec.reserve(maxRows + 1);
+    outputVec.append(headerData);
+
+    for (int row = 0; row < maxRows; row++) {
+        QString curData;
+        curData.reserve(sizeof(char) * 100);
+
+        for (int col = 0; col < m_heelStrikeList.size(); col++) {
+            // Extract data if we have it, or just output empty cell
+            if (m_heelStrikeList[col].size() > row) {
+                curData.append(QString::number(m_heelStrikeList[col][row]) + ",");
+            }
+            else {
+                curData.append(",");
+            }
+
+        }
+        curData.chop(1); // Remove trailing comma
+        curData.append("\n");
+        outputVec.append(curData);
+    }
+
+     return outputVec;
+}
+
 bool StepTable::writeToCSV()
 {
     try {
         // https://stackoverflow.com/questions/27353026/qtableview-output-save-as-csv-or-txt
         qDebug() << "Writing to CSV: " << m_outputFile;
 
-        // Format the header
+        auto outputVec = formatStepsForCSV();
         QString outputData;
-        for (auto& heading: m_sides) {
-            outputData += heading + ",";
-        }
-        outputData.chop(1);
-        outputData += "\n";
-
-
-        // Format the data string
-        auto maxRows = *std::max_element(m_lastOccupiedPosition.constBegin(), m_lastOccupiedPosition.constEnd());
-        for (int row = 0; row < maxRows; row++) {
-            for (int col = 0; col < m_heelStrikeList.size(); col++) {
-                // Extract data if we have it, or just output empty cell
-
-                if (m_heelStrikeList[col].size() > row) {
-                    outputData += QString::number(m_heelStrikeList[col][row]) + ",";
-                }
-                else {
-                    outputData += ",";
-                }
-
-            }
-            outputData.chop(1);
-            outputData += "\n";
-        }
+        // Reformat from vector of strings to one string
+        // https://www.qt.io/blog/efficient-qstring-concatenation-with-c17-fold-expressions
+        size_t output_size = std::accumulate(outputVec.cbegin(), outputVec.cend(),
+                                             0, [] (int acc, const QString& s) {
+                                                 return acc + s.length();
+                                             });
+        outputData.resize(output_size);
+        std::accumulate(outputVec.cbegin(), outputVec.cend(), outputData.begin(),
+                        [] (const auto& dest, const QString& s) {
+                            return std::copy(s.cbegin(), s.cend(), dest);
+                        });
 
         // Write to file
         QString outputPath = m_outputFolder.filePath(m_outputFile);
         QFile csvFile(outputPath);
-        if(csvFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        if (csvFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
 
             QTextStream out(&csvFile);
             out << outputData;
-
             csvFile.close();
+            return true;
         }
-        return true;
+        return false; // Weren't able to write to file
     }
     catch (...) {
         // Failed to write to file

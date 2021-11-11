@@ -31,7 +31,7 @@ private:
     bool alreadyInColumn (qint16 col, qint64 frameNum);
 
     bool writeToCSV();
-
+    QVector<QString> formatStepsForCSV();
 
     QString m_outputFile;
     QDir m_outputFolder;
