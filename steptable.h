@@ -5,7 +5,6 @@
 #include <QTableWidget>
 #include <QWidget>
 
-
 enum class BodySide {Left, Right, COUNT};
 
 class StepTable : public QWidget
@@ -13,8 +12,8 @@ class StepTable : public QWidget
     Q_OBJECT
 public:
     explicit StepTable(QWidget *parent = nullptr);
-
     ~StepTable();
+
 public slots:
     void insertRow(qint16 row);
     void insertNewRightStep(qint64 frameNum);

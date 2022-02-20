@@ -58,7 +58,7 @@ void StepTable::handleCellChanged(QTableWidgetItem *item)
     }
     auto row = item->row();
     auto col = item->column();
-    auto frame_num = item->data(Qt::EditRole);
+    auto frame_num = item->data(Qt::DisplayRole);
 
     // If the frame_num is empty, we want to delete the contents
     if (item->text() == ""){
@@ -66,10 +66,9 @@ void StepTable::handleCellChanged(QTableWidgetItem *item)
         return;
     }
 
-    if (!frame_num.toInt()) {
-        qDebug() << "Entry was not an integer";
-        // Remove the contents of the cell
-        item->setData(Qt::EditRole, "");
+    // Non-integer input or duplicate entry
+    if (!frame_num.toInt() || alreadyInColumn(col, frame_num.toInt())){
+        item->setData(Qt::DisplayRole, "");
         sortColumn(col);
         return;
     }
@@ -79,18 +78,9 @@ void StepTable::handleCellChanged(QTableWidgetItem *item)
         addStep(frame_num.toInt(), BodySide(col));
     }
     else { // Modifying existing entry
-        if (alreadyInColumn(col, frame_num.toInt())){
-            qDebug() << "Already have " << frame_num << " in table";
-            return;
-        }
-
         m_heelStrikeList[col][row] = frame_num.toInt();
         sortColumn(col);
-
     }
-
-    // TODO: signal that can be accepted by mainwindow to change
-    // focus back to the playback window
 }
 
 bool StepTable::saveFootfalls()
@@ -110,7 +100,6 @@ void StepTable::resetForNext(QDir output_dir, QString output_file)
     auto successSave = saveFootfalls();
 
     // TODO: How to handle failure
-
 
     // Extract the parts of the new video name
     m_outputFile = output_file;
@@ -146,7 +135,7 @@ void StepTable::addStep(qint64 frameNum, BodySide side) {
     // This allows the underlying QVariant in QTableWidgetItem to keep track
     // of the datatype rather than forcing a cast to QString.
     auto item = new QTableWidgetItem;
-    item->setData(Qt::EditRole, frameNum);
+    item->setData(Qt::DisplayRole, frameNum);
     m_table->setItem(rowToInsertAt, columnToInsertAt, std::move(item));
 
     // Resort the current column independently from others
@@ -164,7 +153,7 @@ void StepTable::sortColumn(qint16 col)
     for (auto row = 0; row < m_heelStrikeList[col].size(); row++)
     {
         auto curItem = m_table->item(row, col);
-        curItem->setData(Qt::EditRole, m_heelStrikeList[col][row]);
+        curItem->setData(Qt::DisplayRole, m_heelStrikeList[col][row]);
     }
 }
 
