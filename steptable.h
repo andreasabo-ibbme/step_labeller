@@ -20,18 +20,21 @@ public slots:
     void insertNewRightStep(qint64 frameNum);
     void insertNewLeftStep(qint64 frameNum);
     void handleCellChanged(QTableWidgetItem* item);
-    bool saveFootfalls();
     void resetForNext(QDir m_rootFolder, QString outputFile);
+    bool saveFootfalls();
 
 private:
     void styleHeader();
+    void setColumnNames();
     void addStep(qint64 frameNum, BodySide side);
     void removeStep(qint16 row, qint16 col);
     void sortColumn(qint16 col);
     bool alreadyInColumn (qint16 col, qint64 frameNum);
 
     bool writeToCSV();
+    bool readFromCSV();
     QVector<QString> formatStepsForCSV();
+    void clearAllSteps();
 
     QString m_outputFile;
     QDir m_outputFolder;

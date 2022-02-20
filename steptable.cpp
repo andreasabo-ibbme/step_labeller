@@ -15,16 +15,11 @@ StepTable::StepTable(QWidget *parent) : QWidget(parent)
     }
 
     m_table = new QTableWidget(1, static_cast<qint64>(BodySide::COUNT), this);
-    // Dynamically setting column names
-    QStringList colLabels;
-    for (auto& side: m_sides) {
-        colLabels << side;
-    }
-    m_table->setHorizontalHeaderLabels(colLabels);
+
+    setColumnNames();
     // Fix the style of the header to be consistent with rest of the table
     styleHeader();
-    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch );
-//    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive );
+
     // Set layout for this widget
     QGridLayout *layout = new QGridLayout();
     layout->addWidget(m_table, 0, 0);
@@ -36,7 +31,7 @@ StepTable::StepTable(QWidget *parent) : QWidget(parent)
 
 StepTable::~StepTable()
 {
-    delete m_table; // Not needed because we set parent this this when creating the table
+    delete m_table; // Not needed because we set parent to this when creating the table
 }
 
 void StepTable::insertRow(qint16 row)
@@ -107,24 +102,22 @@ bool StepTable::saveFootfalls()
 
     qDebug() << "saving to file " << m_outputFile;
     return writeToCSV();
-
-
 }
 
 void StepTable::resetForNext(QDir output_dir, QString output_file)
 {
     // TODO: save to file
-    auto success = saveFootfalls();
+    auto successSave = saveFootfalls();
 
     // TODO: How to handle failure
 
-    // TODO: Reset footfall table
 
     // Extract the parts of the new video name
     m_outputFile = output_file;
     m_outputFolder = output_dir;
 
-    // TODO: Load footfalls if available
+    // Load footfalls if available, otherwise just reset table
+    auto successRead = readFromCSV();
 }
 
 void StepTable::removeStep(qint16 row, qint16 col){
@@ -166,7 +159,6 @@ void StepTable::addStep(qint64 frameNum, BodySide side) {
 
 void StepTable::sortColumn(qint16 col)
 {
-    qDebug() << "we are sorting: " << col;
     // Resort the column in a way that is independent from the others
     std::sort(m_heelStrikeList[col].begin(), m_heelStrikeList[col].end());
     for (auto row = 0; row < m_heelStrikeList[col].size(); row++)
@@ -195,7 +187,6 @@ QVector<QString> StepTable::formatStepsForCSV()
     headerData.chop(1); // Remove the last comma and replace with a newline
     headerData += "\n";
 
-
     // Format the data string
     auto maxRows = *std::max_element(m_lastOccupiedPosition.constBegin(), m_lastOccupiedPosition.constEnd());
     QVector<QString> outputVec;
@@ -221,7 +212,22 @@ QVector<QString> StepTable::formatStepsForCSV()
         outputVec.append(curData);
     }
 
-     return outputVec;
+    return outputVec;
+}
+
+void StepTable::clearAllSteps()
+{
+    // Clear the internal record-keeping
+    for (auto& item : m_heelStrikeList) {
+        item.clear();
+    }
+
+    for (auto& item : m_lastOccupiedPosition) {
+        item = 0;
+    }
+
+    // Clear the display
+    m_table->setRowCount(0);
 }
 
 bool StepTable::writeToCSV()
@@ -229,12 +235,11 @@ bool StepTable::writeToCSV()
     try {
         // https://stackoverflow.com/questions/27353026/qtableview-output-save-as-csv-or-txt
         qDebug() << "Writing to CSV: " << m_outputFile;
-
         auto outputVec = formatStepsForCSV();
         QString outputData;
         // Reformat from vector of strings to one string
         // https://www.qt.io/blog/efficient-qstring-concatenation-with-c17-fold-expressions
-        size_t output_size = std::accumulate(outputVec.cbegin(), outputVec.cend(),
+        size_t output_size = std::accumulate(outputVec.constBegin(), outputVec.constEnd(),
                                              0, [] (int acc, const QString& s) {
                                                  return acc + s.length();
                                              });
@@ -262,6 +267,39 @@ bool StepTable::writeToCSV()
     }
 }
 
+bool StepTable::readFromCSV()
+{
+    // Make sure that the table is empty before we try to add to it
+    clearAllSteps();
+
+    QString outputPath = m_outputFolder.filePath(m_outputFile);
+    QFile csvFile(outputPath);
+
+    // Parse file into internal structs first
+    if (csvFile.open(QIODevice::ReadOnly | QIODevice::Truncate)) {
+        QTextStream dataStream(&csvFile);
+        bool firstLine{true};
+        while (!dataStream.atEnd()) {
+            QString line = dataStream.readLine();
+            // Skip the headings
+            if (firstLine){
+                firstLine = false;
+                continue;
+            }
+            QStringList fields = line.split(",");
+
+
+            for (int i = 0; i < m_lastOccupiedPosition.size(); ++i) {
+                if (fields[i].isEmpty()) continue;
+                addStep(fields[i].toInt(), static_cast<BodySide>(i));
+            }
+        }
+        csvFile.close();
+        return true;
+    }
+    return false;
+}
+
 void StepTable::styleHeader()
 {
     // Work-around to style header:
@@ -281,4 +319,15 @@ void StepTable::styleHeader()
             "border-bottom: 1px solid #D8D8D8;"
             "background-color:white;"
         "}" );
+}
+
+void StepTable::setColumnNames()
+{
+    // Dynamically setting column names
+    QStringList colLabels;
+    for (auto& side: m_sides) {
+        colLabels << side;
+    }
+    m_table->setHorizontalHeaderLabels(colLabels);
+    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch );
 }

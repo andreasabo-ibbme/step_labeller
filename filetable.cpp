@@ -61,8 +61,11 @@ void FileTable::handleItemDoubleClicked(QTableWidgetItem *item)
     qDebug() << item->column() <<  fileColumn <<"handleItemDoubleClicked";
     QString localPath = item->data(Qt::EditRole).toString();
     QString videoName = m_rootFolder.filePath(localPath);
-    emit playVideoByName(videoName);
+
+    // TODO: check if this succeeded before moving onto playing the video
     emit sendFootfallOutputMetaData(m_rootFolder.filePath(m_footfall_folder), QFileInfo(localPath).completeBaseName() + m_stepFormat);
+
+    emit playVideoByName(videoName);
 }
 
 void FileTable::setLabelStatus(qint64 rowToInsertAt, QString stepFormat)
