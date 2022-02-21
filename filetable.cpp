@@ -50,6 +50,11 @@ void FileTable::fillTableWithFiles(QFileInfoList files, QString footfallFolder, 
     }
 }
 
+void FileTable::playFirstVideo()
+{
+    playVideoFromTable(m_table->itemAt(0,0));
+}
+
 void FileTable::handleItemDoubleClicked(QTableWidgetItem *item)
 {
     // If a video name was selected, get the full file name and
@@ -58,14 +63,7 @@ void FileTable::handleItemDoubleClicked(QTableWidgetItem *item)
     if (item->column() != fileColumn)
         return;
 
-    qDebug() << item->column() <<  fileColumn <<"handleItemDoubleClicked";
-    QString localPath = item->data(Qt::EditRole).toString();
-    QString videoName = m_rootFolder.filePath(localPath);
-
-    // TODO: check if this succeeded before moving onto playing the video
-    emit sendFootfallOutputMetaData(m_rootFolder.filePath(m_footfall_folder), QFileInfo(localPath).completeBaseName() + m_stepFormat);
-
-    emit playVideoByName(videoName);
+    playVideoFromTable(item);
 }
 
 void FileTable::setLabelStatus(qint64 rowToInsertAt, QString stepFormat)
@@ -75,7 +73,7 @@ void FileTable::setLabelStatus(qint64 rowToInsertAt, QString stepFormat)
     auto fileCol = static_cast<qint16>(FileTableRowName::FileName);
     auto statusCol = static_cast<qint16>(FileTableRowName::StepStatus);
 
-    auto curFileName = m_table->item(rowToInsertAt, fileCol)->data(Qt::EditRole);
+    auto curFileName = m_table->item(rowToInsertAt, fileCol)->data(Qt::DisplayRole);
     QFileInfo footfallFileInfo = QFileInfo(QDir(m_footfall_folder), QFileInfo(curFileName.toString()).completeBaseName() + stepFormat);
 //    auto /*footfallFileName*/ = QDir(footfallFolder).filePath(curFileName.toString() + stepFormat);
 
@@ -87,6 +85,16 @@ void FileTable::setLabelStatus(qint64 rowToInsertAt, QString stepFormat)
     auto new_item = new QTableWidgetItem(testIcon, "");
     m_table->setItem(rowToInsertAt, statusCol, std::move(new_item));
 
+}
+
+void FileTable::playVideoFromTable(const QTableWidgetItem *item)
+{
+    QString localPath = item->data(Qt::DisplayRole).toString();
+    QString videoName = m_rootFolder.filePath(localPath);
+
+    // TODO: check if this succeeded before moving onto playing the video
+    emit sendFootfallOutputMetaData(m_rootFolder.filePath(m_footfall_folder), QFileInfo(localPath).completeBaseName() + m_stepFormat);
+    emit playVideoByName(videoName);
 }
 
 void FileTable::styleHeader()

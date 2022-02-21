@@ -238,9 +238,8 @@ void MainWindow::findVideos()
          // Set default footfall path
          m_footfall_path = myDir.filePath(default_footfall);
          m_fileTable->fillTableWithFiles(m_video_list, m_footfall_path, myDir, m_outputStepFormat);
-
          // Automatically start playing the first video in the list
-         openVideo((m_video_list[0]).absoluteFilePath());
+         m_fileTable->playFirstVideo();
      }
      else {
          // TODO: error handling if did not select dir correctly. IE. non-playable files in folder
@@ -272,7 +271,7 @@ void MainWindow::openVideo(QString video)
 {
     qDebug() << "Opening video: " << video;
     if (capturer != nullptr) {
-        // If a thread is already running, stop it and start adn new one
+        // If a thread is already running, stop it and start a new one
         capturer->setRunning(false);
         disconnect(capturer, &CaptureThread::frameCaptured, this, &MainWindow::updateFrame);
         connect(capturer, &CaptureThread::finished, capturer, &CaptureThread::deleteLater);

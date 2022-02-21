@@ -13,19 +13,19 @@ class FileTable : public QWidget
     Q_OBJECT
 public:
     explicit FileTable(QWidget *parent = nullptr);
+    void fillTableWithFiles(QFileInfoList files, QString footfallFolder, QDir videoFolder, QString stepFormat);
+    void playFirstVideo();
 
 signals:
     void playVideoByName(QString video);
     void sendFootfallOutputMetaData(QDir m_rootFolder, QString outputFile);
-
-public slots:
-    void fillTableWithFiles(QFileInfoList files, QString footfallFolder, QDir videoFolder, QString stepFormat);
 
 private slots:
     void handleItemDoubleClicked(QTableWidgetItem *item);
 
 private:
     void setLabelStatus(qint64 rowToInsertAt, QString stepFormat);
+    void playVideoFromTable(const QTableWidgetItem *item);
 
 private:
     void styleHeader();
