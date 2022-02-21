@@ -39,18 +39,11 @@ private:
     void connectPlaybackControls();
     void connectCaptureControls();
 
-public slots:
-    void changeVideo(QString video);
-
 private slots:
-    void showCameraInfo();
-    void openCamera();
     void updateFrame(cv::Mat* frame, qint64 frameNum);
     void updateFPS(float fps);
     void findVideos();
     void openVideo(QString video);
-    void exportSteps();
-
 
 private:
     QMenu *fileMenu;

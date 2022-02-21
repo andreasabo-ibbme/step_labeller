@@ -21,6 +21,7 @@ public slots:
     void handleCellChanged(QTableWidgetItem* item);
     void resetForNext(QDir m_rootFolder, QString outputFile);
     bool saveFootfalls();
+    void clearAllSteps();
 
 private:
     void styleHeader();
@@ -33,7 +34,6 @@ private:
     bool writeToCSV();
     bool readFromCSV();
     QVector<QString> formatStepsForCSV();
-    void clearAllSteps();
 
     QString m_outputFile;
     QDir m_outputFolder;

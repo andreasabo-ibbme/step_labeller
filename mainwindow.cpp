@@ -161,27 +161,6 @@ void MainWindow::connectPlaybackControls()
     connect(controls, &PlayerControls::stop, capturer, &CaptureThread::stop);
 }
 
-void MainWindow::changeVideo(QString video)
-{
-
-}
-
-void MainWindow::showCameraInfo()
-{
-    QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
-    QString info = QString("Available Cameras: \n");
-
-    foreach (const QCameraInfo &cameraInfo, cameras) {
-       info += " - " + cameraInfo.deviceName() + ": ";
-       info += cameraInfo.description() + "\n";
-    }
-    QMessageBox::information(this, "Cameras", info);
-}
-
-
-
-
-
 void MainWindow::updateFrame(cv::Mat* mat, qint64 frameNum)
 {
     {
@@ -248,25 +227,6 @@ void MainWindow::findVideos()
 
 }
 
-void MainWindow::openCamera()
-{
-    if (capturer != nullptr) {
-        // If a thread is already running, stop it and start adn new one
-        capturer->setRunning(false);
-        disconnect(capturer, &CaptureThread::frameCaptured, this, &MainWindow::updateFrame);
-        connect(capturer, &CaptureThread::finished, capturer, &CaptureThread::deleteLater);
-    }
-
-    int camera_ind = 0;
-    capturer = new CaptureThread(camera_ind, data_lock,  controls->playbackRate());
-
-    // Needs the newly created capture thread
-    connectPlaybackControls();
-    capturer->start();
-    capturer->startCalcFPS(true);
-    mainStatusLabel->setText(QString("Capturing camera: %1").arg(camera_ind));
-}
-
 void MainWindow::openVideo(QString video)
 {
     qDebug() << "Opening video: " << video;
@@ -283,12 +243,6 @@ void MainWindow::openVideo(QString video)
     capturer->start();
     capturer->startCalcFPS(false);
     mainStatusLabel->setText(QString("Playing video from: %1").arg(video));
-}
-
-void MainWindow::exportSteps()
-{
-    // TODO:
-    qDebug() << "ANDREA EXPORT STEPS";
 }
 
 

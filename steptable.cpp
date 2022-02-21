@@ -89,8 +89,6 @@ bool StepTable::saveFootfalls()
     if (!m_outputFolder.exists()) {
         m_outputFolder.mkdir(".");
     }
-
-    qDebug() << "saving to file " << m_outputFile;
     return writeToCSV();
 }
 
