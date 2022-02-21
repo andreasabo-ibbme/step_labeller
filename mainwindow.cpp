@@ -11,11 +11,12 @@
 
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), capturer(nullptr), m_frameNum(0)
+    : QMainWindow(parent), m_capturer(nullptr), m_frameNum(0)
 {
     initUI();
-    data_lock = new std::mutex;
+    m_data_lock = new std::mutex;
     m_outputStepFormat = ".csv";
+    m_Font = QFont("Times", 16, QFont::Bold);
 }
 
 MainWindow::~MainWindow()
@@ -24,17 +25,17 @@ MainWindow::~MainWindow()
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
-    if (!capturer)
+    if (!m_capturer)
         return;
     switch (event->key()){
     case Qt::Key_A:
-        capturer->previous();
+        m_capturer->previous();
         break;
     case Qt::Key_D:
-        capturer->next();
+        m_capturer->next();
         break;
     case Qt::Key_Space:
-        capturer->togglePlayPause();
+        m_capturer->togglePlayPause();
         break;
     case Qt::Key_E:
         m_table->insertNewRightStep(m_frameNum);
@@ -54,8 +55,8 @@ void MainWindow::initUI()
     this->resize(2000, 800);
     constexpr size_t default_fps = 30;
 
-    // Set up playback controls
-    controls = new PlayerControls(default_fps, this);
+    // Set up playback m_controls
+    m_controls = new PlayerControls(default_fps, this);
 
     // Set up the menubar
     fileMenu = menuBar()->addMenu("&File");
@@ -64,10 +65,10 @@ void MainWindow::initUI()
 
 
     // Set up the playback area
-    imageScene = new QGraphicsScene(this);
-    imageView = new QGraphicsView(imageScene);
-    imageView->setFocusPolicy(Qt::StrongFocus);
-//    main_layout->addWidget(imageView, 0, 1, 12, 5);
+    m_imageScene = new QGraphicsScene(this);
+    m_imageView = new QGraphicsView(m_imageScene);
+    m_imageView->setFocusPolicy(Qt::StrongFocus);
+//    main_layout->addWidget(m_imageView, 0, 1, 12, 5);
 
 
 
@@ -86,9 +87,9 @@ void MainWindow::initUI()
     main_layout->addWidget(m_fileTable, 0, 0, 10, 2);
 
 
-    // Set up playback window and controls
-    main_layout->addWidget(imageView, 0, 2, 10, 5);
-    main_layout->addWidget(controls, 10, 2, 1, 5);
+    // Set up playback window and m_controls
+    main_layout->addWidget(m_imageView, 0, 2, 10, 5);
+    main_layout->addWidget(m_controls, 10, 2, 1, 5);
 
     // Set up step table view
     m_table = new StepTable();
@@ -105,7 +106,7 @@ void MainWindow::initUI()
     // Set up the tools layout
 //    QGridLayout *tool_layout = new QGridLayout();
 //    main_layout->addLayout(tool_layout, 12, 0, 1, 1);
-//    tool_layout->addWidget(controls, 0, 0, 1, 1, Qt::AlignCenter);
+//    tool_layout->addWidget(m_controls, 0, 0, 1, 1, Qt::AlignCenter);
 
 //    main_layout->addLayout(videoPlaybackLayout, 0, 0);
 
@@ -113,10 +114,10 @@ void MainWindow::initUI()
 
 
     // Set up the status bar
-    mainStatusBar = statusBar();
-    mainStatusLabel = new QLabel(mainStatusBar);
-    mainStatusBar->addPermanentWidget(mainStatusLabel);
-    mainStatusLabel->setText("Labeller is Ready");
+    m_mainStatusBar = statusBar();
+    m_mainStatusLabel = new QLabel(m_mainStatusBar);
+    m_mainStatusBar->addPermanentWidget(m_mainStatusLabel);
+    m_mainStatusLabel->setText("Labeller is Ready");
 
     createActions();
 
@@ -147,55 +148,55 @@ void MainWindow::createActions()
 
 void MainWindow::connectPlaybackControls()
 {
-    connect(capturer, &CaptureThread::frameCaptured, this, &MainWindow::updateFrame);
-    connect(capturer, &CaptureThread::fpsChanged, this, &MainWindow::updateFPS);
-    connect(capturer, &CaptureThread::stateChanged, controls, &PlayerControls::setState);
-    connect(controls, &PlayerControls::changeRate, capturer, &CaptureThread::rateChanged);
-    connect(controls, &PlayerControls::changeFrame, capturer, &CaptureThread::frameChanged);
+    connect(m_capturer, &CaptureThread::frameCaptured, this, &MainWindow::updateFrame);
+    connect(m_capturer, &CaptureThread::fpsChanged, this, &MainWindow::updateFPS);
+    connect(m_capturer, &CaptureThread::stateChanged, m_controls, &PlayerControls::setState);
+    connect(m_controls, &PlayerControls::changeRate, m_capturer, &CaptureThread::rateChanged);
+    connect(m_controls, &PlayerControls::changeFrame, m_capturer, &CaptureThread::frameChanged);
 
 
-    connect(controls, &PlayerControls::play, capturer, &CaptureThread::play);
-    connect(controls, &PlayerControls::pause, capturer, &CaptureThread::pause);
-    connect(controls, &PlayerControls::next, capturer, &CaptureThread::next);
-    connect(controls, &PlayerControls::previous, capturer, &CaptureThread::previous);
-    connect(controls, &PlayerControls::stop, capturer, &CaptureThread::stop);
+    connect(m_controls, &PlayerControls::play, m_capturer, &CaptureThread::play);
+    connect(m_controls, &PlayerControls::pause, m_capturer, &CaptureThread::pause);
+    connect(m_controls, &PlayerControls::next, m_capturer, &CaptureThread::next);
+    connect(m_controls, &PlayerControls::previous, m_capturer, &CaptureThread::previous);
+    connect(m_controls, &PlayerControls::stop, m_capturer, &CaptureThread::stop);
 }
 
 void MainWindow::updateFrame(cv::Mat* mat, qint64 frameNum)
 {
     {
         // Lock while updating the frame for display
-        std::lock_guard<std::mutex> lock(*data_lock);
-        currentFrame = *mat;
+        std::lock_guard<std::mutex> lock(*m_data_lock);
+        m_currentFrame = *mat;
         m_frameNum = frameNum;
     }
-    QFont serifFont("Times", 16, QFont::Bold);
+
 
     QImage frame(
-                currentFrame.data,
-                currentFrame.cols,
-                currentFrame.rows,
-                currentFrame.step,
+                m_currentFrame.data,
+                m_currentFrame.cols,
+                m_currentFrame.rows,
+                m_currentFrame.step,
                 QImage::Format_RGB888);
 
-    // Resize the image so it fits within the imageView
-    QSize viewrect_size = imageView->viewport()->size();
+    // Resize the image so it fits within the m_imageView
+    QSize viewrect_size = m_imageView->viewport()->size();
     frame = frame.scaled(viewrect_size, Qt::KeepAspectRatio);
 
     QPixmap image = QPixmap::fromImage(frame);
 
-    imageScene->clear();
-    imageView->resetTransform();
-    imageScene->addPixmap(image);
-    imageScene->addText(QString::number(frameNum), serifFont);
+    m_imageScene->clear();
+    m_imageView->resetTransform();
+    m_imageScene->addPixmap(image);
+    m_imageScene->addText(QString::number(frameNum), m_Font);
 
-    imageScene->update();
-    imageView->setSceneRect(image.rect());
+    m_imageScene->update();
+    m_imageView->setSceneRect(image.rect());
 }
 
 void MainWindow::updateFPS(float fps)
 {
-    mainStatusLabel->setText(QString("FPS is %1").arg(fps));
+    m_mainStatusLabel->setText(QString("FPS is %1").arg(fps));
 
 }
 
@@ -211,12 +212,10 @@ void MainWindow::findVideos()
      {
          dirName = dialog.selectedFiles();
          auto myDir = QDir(dirName.at(0));
+         auto video_list = myDir.entryInfoList(QDir::Files);
+         auto footfallPath = myDir.filePath(default_footfall);
 
-         m_video_list = myDir.entryInfoList(QDir::Files);
-
-         // Set default footfall path
-         m_footfall_path = myDir.filePath(default_footfall);
-         m_fileTable->fillTableWithFiles(m_video_list, m_footfall_path, myDir, m_outputStepFormat);
+         m_fileTable->fillTableWithFiles(video_list, footfallPath, myDir, m_outputStepFormat);
          // Automatically start playing the first video in the list
          m_fileTable->playFirstVideo();
      }
@@ -230,19 +229,19 @@ void MainWindow::findVideos()
 void MainWindow::openVideo(QString video)
 {
     qDebug() << "Opening video: " << video;
-    if (capturer != nullptr) {
+    if (m_capturer != nullptr) {
         // If a thread is already running, stop it and start a new one
-        capturer->setRunning(false);
-        disconnect(capturer, &CaptureThread::frameCaptured, this, &MainWindow::updateFrame);
-        connect(capturer, &CaptureThread::finished, capturer, &CaptureThread::deleteLater);
+        m_capturer->setRunning(false);
+        disconnect(m_capturer, &CaptureThread::frameCaptured, this, &MainWindow::updateFrame);
+        connect(m_capturer, &CaptureThread::finished, m_capturer, &CaptureThread::deleteLater);
     }
 
-    capturer = new CaptureThread(video, data_lock, controls->playbackRate());
+    m_capturer = new CaptureThread(video, m_data_lock, m_controls->playbackRate());
 
     connectPlaybackControls();
-    capturer->start();
-    capturer->startCalcFPS(false);
-    mainStatusLabel->setText(QString("Playing video from: %1").arg(video));
+    m_capturer->start();
+    m_capturer->startCalcFPS(false);
+    m_mainStatusLabel->setText(QString("Playing video from: %1").arg(video));
 }
 
 

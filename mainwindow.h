@@ -46,37 +46,32 @@ private slots:
     void openVideo(QString video);
 
 private:
+    // Menu items
     QMenu *fileMenu;
     QAction *cameraInfoAction;
     QAction *openCameraAction;
     QAction *exitAction;
     QAction *openVidsAction;
 
-    QGraphicsScene *imageScene;
-    QGraphicsView *imageView;
-
-    QCheckBox *monitorCheckBox;
-    QPushButton *findVideosButton;
+    // Buttons
     QPushButton *m_startExportButton;
+    QStatusBar *m_mainStatusBar;
+    QLabel *m_mainStatusLabel;
 
-    QListView *saved_list;
+    // Video playback
+    QGraphicsScene *m_imageScene;
+    QGraphicsView *m_imageView;
+    cv::Mat m_currentFrame;
+    std::mutex *m_data_lock;
 
-    QStatusBar *mainStatusBar;
-    QLabel *mainStatusLabel;
-
-    cv::Mat currentFrame;
-    std::mutex *data_lock;
-    CaptureThread *capturer;
-    PlayerControls *controls;
-
-    // To move to videolist widget
-    QFileInfoList m_video_list;
-
+    // Sub components
     StepTable *m_table;
     FileTable *m_fileTable;
-    qint64 m_frameNum;
+    CaptureThread *m_capturer;
+    PlayerControls *m_controls;
 
-    QString m_footfall_path;
+    qint64 m_frameNum;
     QString m_outputStepFormat;
+    QFont m_Font;
 };
 #endif // MAINWINDOW_H
