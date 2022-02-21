@@ -20,11 +20,14 @@ signals:
     void playVideoByName(QString video);
     void sendFootfallOutputMetaData(QDir m_rootFolder, QString outputFile);
 
+public slots:
+    void updateFileLabelStatus();
+
 private slots:
     void handleItemDoubleClicked(QTableWidgetItem *item);
 
 private:
-    void setLabelStatus(qint64 rowToInsertAt, QString stepFormat);
+    void setLabelStatus(qint64 rowToInsertAt);
     void playVideoFromTable(const QTableWidgetItem *item);
 
 private:

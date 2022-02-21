@@ -46,9 +46,8 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     default:
         break;
     }
-
-    qDebug() << event->key();
 }
+
 void MainWindow::initUI()
 {
     qDebug() << "Initializing UI";
@@ -88,6 +87,7 @@ void MainWindow::initUI()
     // Save step table button
     m_saveStepsButton = new QPushButton("Save steps to CSV", this);
     connect(m_saveStepsButton, &QPushButton::clicked, m_table, &StepTable::saveFootfalls);
+    connect(m_saveStepsButton, &QPushButton::clicked, m_table, [&](){m_table->saveFootfalls(true);});
     main_layout->addWidget(m_saveStepsButton, 10, 8, 1, 1, Qt::AlignCenter);
 
     // Set the layout for the main window
@@ -121,6 +121,7 @@ void MainWindow::createActions()
     // Set up the connections for FileTable class
     connect(m_fileTable, &FileTable::playVideoByName, this, &MainWindow::openVideo);
     connect(m_fileTable, &FileTable::sendFootfallOutputMetaData, m_table, &StepTable::resetForNext);
+    connect(m_table, &StepTable::updatedCSVFile, m_fileTable, &FileTable::updateFileLabelStatus);
 }
 
 void MainWindow::connectPlaybackControls()

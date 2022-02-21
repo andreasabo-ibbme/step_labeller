@@ -45,7 +45,7 @@ void FileTable::fillTableWithFiles(QFileInfoList files, QString footfallFolder, 
          m_table->setItem(m_lastOccupiedPosition, columnToInsertAt, std::move(new_item));
 
          // Update label status
-         setLabelStatus(m_lastOccupiedPosition, stepFormat);
+         setLabelStatus(m_lastOccupiedPosition);
          m_lastOccupiedPosition++;
     }
 }
@@ -53,6 +53,13 @@ void FileTable::fillTableWithFiles(QFileInfoList files, QString footfallFolder, 
 void FileTable::playFirstVideo()
 {
     playVideoFromTable(m_table->itemAt(0,0));
+}
+
+void FileTable::updateFileLabelStatus()
+{
+    for (auto i = 0; i < m_lastOccupiedPosition; ++i) {
+        setLabelStatus(i);
+    }
 }
 
 void FileTable::handleItemDoubleClicked(QTableWidgetItem *item)
@@ -66,7 +73,7 @@ void FileTable::handleItemDoubleClicked(QTableWidgetItem *item)
     playVideoFromTable(item);
 }
 
-void FileTable::setLabelStatus(qint64 rowToInsertAt, QString stepFormat)
+void FileTable::setLabelStatus(qint64 rowToInsertAt)
 {
     auto testIcon = this->style()->standardIcon(QStyle::SP_DialogCancelButton);
 
@@ -74,9 +81,7 @@ void FileTable::setLabelStatus(qint64 rowToInsertAt, QString stepFormat)
     auto statusCol = static_cast<qint64>(FileTableRowName::StepStatus);
 
     auto curFileName = m_table->item(rowToInsertAt, fileCol)->data(Qt::DisplayRole);
-    QFileInfo footfallFileInfo = QFileInfo(QDir(m_footfall_folder), QFileInfo(curFileName.toString()).completeBaseName() + stepFormat);
-//    auto /*footfallFileName*/ = QDir(footfallFolder).filePath(curFileName.toString() + stepFormat);
-
+    QFileInfo footfallFileInfo = QFileInfo(QDir(m_footfall_folder), QFileInfo(curFileName.toString()).completeBaseName() + m_stepFormat);
 
     if (footfallFileInfo.exists()) {
         testIcon = this->style()->standardIcon(QStyle::SP_DialogApplyButton);

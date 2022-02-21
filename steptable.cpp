@@ -84,19 +84,26 @@ void StepTable::handleCellChanged(QTableWidgetItem *item)
     }
 }
 
-bool StepTable::saveFootfalls()
-{
-    // Make sure the target folder exists (keep here because this is a public function)
+void StepTable::makeOutputFolder() {
     if (!m_outputFolder.exists()) {
         m_outputFolder.mkdir(".");
     }
-    return writeToCSV();
 }
+
+
+bool StepTable::saveFootfalls(bool forceSave)
+{
+    // Make sure the target folder exists (keep here because this is a public function)
+    makeOutputFolder();
+    return writeToCSV(forceSave);
+}
+
+
 
 void StepTable::resetForNext(QDir output_dir, QString output_file)
 {
     // TODO: save to file
-    auto successSave = saveFootfalls();
+    auto successSave = saveFootfalls(false);
 
     // TODO: How to handle failure
 
@@ -154,8 +161,7 @@ void StepTable::sortColumn(qint64 col)
     }
 
     // Insert extra empty row in the display to allow manual addition of steps
-    auto maxRows = *std::max_element(m_lastOccupiedPosition.cbegin(), m_lastOccupiedPosition.cend());
-    m_table->setRowCount(maxRows + 1);
+    m_table->setRowCount(getMaxRows() + 1);
 }
 
 bool StepTable::alreadyInColumn(qint64 col, qint64 frameNum)
@@ -165,6 +171,11 @@ bool StepTable::alreadyInColumn(qint64 col, qint64 frameNum)
             return true;
     }
     return false;
+}
+
+qint64 StepTable::getMaxRows()
+{
+    return *std::max_element(m_lastOccupiedPosition.cbegin(), m_lastOccupiedPosition.cend());
 }
 
 QVector<QString> StepTable::formatStepsForCSV()
@@ -178,7 +189,7 @@ QVector<QString> StepTable::formatStepsForCSV()
     headerData += "\n";
 
     // Format the data string
-    auto maxRows = *std::max_element(m_lastOccupiedPosition.cbegin(), m_lastOccupiedPosition.cend());
+    auto maxRows = getMaxRows();
     QVector<QString> outputVec;
     outputVec.reserve(maxRows + 1);
     outputVec.append(headerData);
@@ -224,8 +235,9 @@ void StepTable::clearAllSteps()
 
 }
 
-bool StepTable::writeToCSV()
+bool StepTable::writeToCSV(bool forceSave=false)
 {
+    if (!forceSave && !getMaxRows()) return false;
     try {
         // https://stackoverflow.com/questions/27353026/qtableview-output-save-as-csv-or-txt
         qDebug() << "Writing to CSV: " << m_outputFile;
@@ -252,6 +264,7 @@ bool StepTable::writeToCSV()
             QTextStream out(&csvFile);
             out << outputData;
             csvFile.close();
+            emit updatedCSVFile();
             return true;
         }
         return false; // Weren't able to write to file

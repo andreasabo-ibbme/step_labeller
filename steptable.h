@@ -14,13 +14,16 @@ public:
     explicit StepTable(QWidget *parent = nullptr);
     ~StepTable();
 
+signals:
+    void updatedCSVFile();
+
 public slots:
     void insertRow(qint64 row);
     void insertNewRightStep(qint64 frameNum);
     void insertNewLeftStep(qint64 frameNum);
     void handleCellChanged(QTableWidgetItem* item);
     void resetForNext(QDir m_rootFolder, QString outputFile);
-    bool saveFootfalls();
+    bool saveFootfalls(bool forceSave);
     void clearAllSteps();
 
 private:
@@ -29,9 +32,11 @@ private:
     void addStep(qint64 frameNum, BodySide side);
     void removeStep(qint64 row, qint64 col);
     void sortColumn(qint64 col);
+    void makeOutputFolder();
     bool alreadyInColumn (qint64 col, qint64 frameNum);
+    qint64 getMaxRows();
 
-    bool writeToCSV();
+    bool writeToCSV(bool forceSave);
     bool readFromCSV();
     QVector<QString> formatStepsForCSV();
 
