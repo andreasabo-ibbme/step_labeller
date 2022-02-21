@@ -123,13 +123,13 @@ void StepTable::addStep(qint64 frameNum, BodySide side) {
     auto columnToInsertAt = static_cast<qint64>(side);
     auto rowToInsertAt = m_lastOccupiedPosition[columnToInsertAt];
 
-    // TODO: make sure we don't insert duplicates
     if (alreadyInColumn(columnToInsertAt, frameNum)){
         return;
     }
 
-    if (rowToInsertAt == m_table->rowCount())
+    if (rowToInsertAt == m_table->rowCount()) {
         insertRow(rowToInsertAt);
+    }
 
     // This allows the underlying QVariant in QTableWidgetItem to keep track
     // of the datatype rather than forcing a cast to QString.
@@ -137,11 +137,10 @@ void StepTable::addStep(qint64 frameNum, BodySide side) {
     item->setData(Qt::DisplayRole, frameNum);
     m_table->setItem(rowToInsertAt, columnToInsertAt, std::move(item));
 
-    // Resort the current column independently from others
+    // Re-sort the current column independently from others
     m_heelStrikeList[columnToInsertAt].push_back(frameNum);
-    sortColumn(columnToInsertAt);
-
     m_lastOccupiedPosition[columnToInsertAt]++;
+    sortColumn(columnToInsertAt);
     m_algorithmicStepAdd = false;
 }
 
@@ -149,11 +148,14 @@ void StepTable::sortColumn(qint64 col)
 {
     // Resort the column in a way that is independent from the others
     std::sort(m_heelStrikeList[col].begin(), m_heelStrikeList[col].end());
-    for (auto row = 0; row < m_heelStrikeList[col].size(); row++)
-    {
+    for (auto row = 0; row < m_heelStrikeList[col].size(); row++) {
         auto curItem = m_table->item(row, col);
         curItem->setData(Qt::DisplayRole, m_heelStrikeList[col][row]);
     }
+
+    // Insert extra empty row in the display to allow manual addition of steps
+    auto maxRows = *std::max_element(m_lastOccupiedPosition.cbegin(), m_lastOccupiedPosition.cend());
+    m_table->setRowCount(maxRows + 1);
 }
 
 bool StepTable::alreadyInColumn(qint64 col, qint64 frameNum)
@@ -216,6 +218,10 @@ void StepTable::clearAllSteps()
 
     // Clear the display
     m_table->setRowCount(0);
+
+    // Reset to one empty row to allow for manual addition of steps
+    m_table->setRowCount(1);
+
 }
 
 bool StepTable::writeToCSV()
@@ -235,7 +241,7 @@ bool StepTable::writeToCSV()
         outputData.resize(output_size);
         std::accumulate(outputVec.cbegin(), outputVec.cend(), outputData.begin(),
                         [] (const auto& dest, const QString& s) {
-                            return std::copy(s.cbegin(), s.cbegin(), dest);
+                            return std::copy(s.cbegin(), s.cend(), dest);
                         });
 
         // Write to file
@@ -317,5 +323,5 @@ void StepTable::setColumnNames()
         colLabels << side;
     }
     m_table->setHorizontalHeaderLabels(colLabels);
-    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch );
+    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 }
