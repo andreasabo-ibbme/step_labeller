@@ -100,7 +100,7 @@ void MainWindow::initUI()
     m_mainStatusBar = statusBar();
     m_mainStatusLabel = new QLabel(m_mainStatusBar);
     m_mainStatusBar->addPermanentWidget(m_mainStatusLabel);
-    m_mainStatusLabel->setText("Labeller is Ready");
+    m_mainStatusLabel->setText("Step labeller is ready. Open folder in top-left.");
 
     createActions();
     qDebug() << "Done initializing UI";
@@ -108,8 +108,6 @@ void MainWindow::initUI()
 
 void MainWindow::createActions()
 {
-    cameraInfoAction = new QAction("Camera &Information", this);
-    openCameraAction = new QAction("&Open Camera", this);
     exitAction = new QAction("E&xit", this);
     openVidsAction = new QAction("Open Videos", this);
 

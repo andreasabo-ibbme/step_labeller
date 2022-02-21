@@ -62,46 +62,6 @@ void CaptureThread::videoPlayback(bool& haveMoreFrames)
     }
 }
 
-void CaptureThread::cameraStream()
-{
-
-    qDebug() << "Is openned? "  << m_cap.isOpened();
-    while(running) {
-        QElapsedTimer timer;
-        timer.start();
-        m_cap >> tmp_frame;
-        if (tmp_frame.empty()) {
-            qDebug() << "read frame - nothing";
-            break;
-        }
-        cv::cvtColor(tmp_frame, tmp_frame, cv::COLOR_BGR2RGB);
-        data_lock->lock();
-        frame = tmp_frame;
-        data_lock->unlock();
-        emit frameCaptured(&frame, 1);
-
-        if (fps_calculating) {
-            int ms = timer.elapsed();
-            cur_fps_sample_count++;
-
-            //initial fill up of deque
-            if (cur_fps_sample_count > fps_samples){
-                fps_sum -= time_samples[0];
-                time_samples.pop_front();
-            }
-
-            fps_sum += ms;
-            time_samples.push_back(ms);
-
-            if (cur_fps_sample_count % fps_emit_every_samples == 0)
-            {
-                emit fpsChanged(fps_samples / fps_sum * 1000.0);
-            }
-        }
-    }
-
-}
-
 bool CaptureThread::readNextVideoFrame()
 {
     m_cap >> tmp_frame;
@@ -223,8 +183,8 @@ void CaptureThread::playVideo()
         bool haveMoreFrames{true};
         videoPlayback(haveMoreFrames);
     }
-    else { // Webcam stream
-        cameraStream();
+    else { // Webcam stream - support for this has been removed
+        setState(QMediaPlayer::StoppedState);
     }
 }
 int CaptureThread::exec()

@@ -233,7 +233,7 @@ bool StepTable::writeToCSV()
                                                  return acc + s.length();
                                              });
         outputData.resize(output_size);
-        std::accumulate(outputVec.cbegin(), outputVec.cend(), outputData.cbegin(),
+        std::accumulate(outputVec.cbegin(), outputVec.cend(), outputData.begin(),
                         [] (const auto& dest, const QString& s) {
                             return std::copy(s.cbegin(), s.cbegin(), dest);
                         });

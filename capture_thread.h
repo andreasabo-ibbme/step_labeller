@@ -34,7 +34,6 @@ private:
     void run() override;
 
     void videoPlayback(bool& haveMoreFrames);
-    void cameraStream();
     bool readNextVideoFrame();
     void setState(QMediaPlayer::State state);
     void playVideo();

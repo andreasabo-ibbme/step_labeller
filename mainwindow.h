@@ -48,8 +48,6 @@ private slots:
 private:
     // Menu items
     QMenu *fileMenu;
-    QAction *cameraInfoAction;
-    QAction *openCameraAction;
     QAction *exitAction;
     QAction *openVidsAction;
 
