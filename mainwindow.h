@@ -54,7 +54,7 @@ private:
     QAction *openVidsAction;
 
     // Buttons
-    QPushButton *m_startExportButton;
+    QPushButton *m_clearStepsButton;
     QStatusBar *m_mainStatusBar;
     QLabel *m_mainStatusLabel;
 

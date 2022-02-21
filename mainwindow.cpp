@@ -51,7 +51,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 }
 void MainWindow::initUI()
 {
-    qDebug() << "HERE";
+    qDebug() << "Initializing UI";
     this->resize(2000, 800);
     constexpr size_t default_fps = 30;
 
@@ -60,7 +60,6 @@ void MainWindow::initUI()
 
     // Set up the menubar
     fileMenu = menuBar()->addMenu("&File");
-
     QGridLayout *main_layout = new QGridLayout();
 
 
@@ -68,24 +67,10 @@ void MainWindow::initUI()
     m_imageScene = new QGraphicsScene(this);
     m_imageView = new QGraphicsView(m_imageScene);
     m_imageView->setFocusPolicy(Qt::StrongFocus);
-//    main_layout->addWidget(m_imageView, 0, 1, 12, 5);
-
-
-
-    // Set up file table view
-//    m_fileTable = new FileTable();
-//    main_layout->addWidget(m_fileTable, 0, 0, 12, 1);
-
-    // Set up step export
-//    m_startExportButton = new QPushButton("Export steps", this);
-//    main_layout->addWidget(m_startExportButton, 12, 1, 1, 2, Qt::AlignCenter);
-//    connect(m_startExportButton, &QPushButton::clicked, this, &MainWindow::exportSteps);
-
 
     // Set up file table view
     m_fileTable = new FileTable();
     main_layout->addWidget(m_fileTable, 0, 0, 10, 2);
-
 
     // Set up playback window and m_controls
     main_layout->addWidget(m_imageView, 0, 2, 10, 5);
@@ -95,22 +80,16 @@ void MainWindow::initUI()
     m_table = new StepTable();
     main_layout->addWidget(m_table, 0, 7, 10, 2);
 
+    // Clear step table button
+    m_clearStepsButton = new QPushButton("Clear steps", this);
+    connect(m_clearStepsButton, &QPushButton::clicked, m_table, &StepTable::clearAllSteps);
+    main_layout->addWidget(m_clearStepsButton, 10, 7, 1, 2, Qt::AlignRight);
 
 
     // Set the layout for the main window
     QWidget *layout_widget = new QWidget(this);
     layout_widget->setLayout(main_layout);
     setCentralWidget(layout_widget);
-
-
-    // Set up the tools layout
-//    QGridLayout *tool_layout = new QGridLayout();
-//    main_layout->addLayout(tool_layout, 12, 0, 1, 1);
-//    tool_layout->addWidget(m_controls, 0, 0, 1, 1, Qt::AlignCenter);
-
-//    main_layout->addLayout(videoPlaybackLayout, 0, 0);
-
-
 
 
     // Set up the status bar
@@ -120,7 +99,7 @@ void MainWindow::initUI()
     m_mainStatusLabel->setText("Labeller is Ready");
 
     createActions();
-
+    qDebug() << "Done initializing UI";
 }
 
 void MainWindow::createActions()
@@ -130,18 +109,14 @@ void MainWindow::createActions()
     exitAction = new QAction("E&xit", this);
     openVidsAction = new QAction("Open Videos", this);
 
-//    fileMenu->addAction(cameraInfoAction);
-//    fileMenu->addAction(openCameraAction);
-
     fileMenu->addAction(openVidsAction);
     fileMenu->addAction(exitAction);
 
-    // Set up the connections    
+    // Set up the connections for fileMenu
     connect(openVidsAction, &QAction::triggered, this, &MainWindow::findVideos);
     connect(exitAction, &QAction::triggered, this, &QApplication::quit);
-//    connect(cameraInfoAction, &QAction::triggered, this, &MainWindow::showCameraInfo);
-//    connect(openCameraAction, &QAction::triggered, this, &MainWindow::openCamera);
 
+    // Set up the connections for FileTable class
     connect(m_fileTable, &FileTable::playVideoByName, this, &MainWindow::openVideo);
     connect(m_fileTable, &FileTable::sendFootfallOutputMetaData, m_table, &StepTable::resetForNext);
 }
@@ -171,7 +146,6 @@ void MainWindow::updateFrame(cv::Mat* mat, qint64 frameNum)
         m_frameNum = frameNum;
     }
 
-
     QImage frame(
                 m_currentFrame.data,
                 m_currentFrame.cols,
@@ -197,7 +171,6 @@ void MainWindow::updateFrame(cv::Mat* mat, qint64 frameNum)
 void MainWindow::updateFPS(float fps)
 {
     m_mainStatusLabel->setText(QString("FPS is %1").arg(fps));
-
 }
 
 void MainWindow::findVideos()
@@ -222,8 +195,6 @@ void MainWindow::findVideos()
      else {
          // TODO: error handling if did not select dir correctly. IE. non-playable files in folder
      }
-     qDebug() << "done in findVideos";
-
 }
 
 void MainWindow::openVideo(QString video)
@@ -243,21 +214,3 @@ void MainWindow::openVideo(QString video)
     m_capturer->startCalcFPS(false);
     m_mainStatusLabel->setText(QString("Playing video from: %1").arg(video));
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
