@@ -55,6 +55,7 @@ private:
 
     // Buttons
     QPushButton *m_clearStepsButton;
+    QPushButton *m_saveStepsButton;
     QStatusBar *m_mainStatusBar;
     QLabel *m_mainStatusLabel;
 

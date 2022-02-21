@@ -81,10 +81,14 @@ void MainWindow::initUI()
     main_layout->addWidget(m_table, 0, 7, 10, 2);
 
     // Clear step table button
-    m_clearStepsButton = new QPushButton("Clear steps", this);
+    m_clearStepsButton = new QPushButton("Clear all steps", this);
     connect(m_clearStepsButton, &QPushButton::clicked, m_table, &StepTable::clearAllSteps);
-    main_layout->addWidget(m_clearStepsButton, 10, 7, 1, 2, Qt::AlignRight);
+    main_layout->addWidget(m_clearStepsButton, 10, 7, 1, 1, Qt::AlignCenter);
 
+    // Save step table button
+    m_saveStepsButton = new QPushButton("Save steps to CSV", this);
+    connect(m_saveStepsButton, &QPushButton::clicked, m_table, &StepTable::saveFootfalls);
+    main_layout->addWidget(m_saveStepsButton, 10, 8, 1, 1, Qt::AlignCenter);
 
     // Set the layout for the main window
     QWidget *layout_widget = new QWidget(this);
