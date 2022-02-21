@@ -17,6 +17,7 @@ StepTable::StepTable(QWidget *parent) : QWidget(parent)
     m_table = new QTableWidget(1, static_cast<qint64>(BodySide::COUNT), this);
 
     setColumnNames();
+
     // Fix the style of the header to be consistent with rest of the table
     styleHeader();
 
@@ -175,7 +176,7 @@ QVector<QString> StepTable::formatStepsForCSV()
     headerData += "\n";
 
     // Format the data string
-    auto maxRows = *std::max_element(m_lastOccupiedPosition.constBegin(), m_lastOccupiedPosition.constEnd());
+    auto maxRows = *std::max_element(m_lastOccupiedPosition.cbegin(), m_lastOccupiedPosition.cend());
     QVector<QString> outputVec;
     outputVec.reserve(maxRows + 1);
     outputVec.append(headerData);
@@ -224,20 +225,21 @@ bool StepTable::writeToCSV()
         qDebug() << "Writing to CSV: " << m_outputFile;
         auto outputVec = formatStepsForCSV();
         QString outputData;
+
         // Reformat from vector of strings to one string
         // https://www.qt.io/blog/efficient-qstring-concatenation-with-c17-fold-expressions
-        size_t output_size = std::accumulate(outputVec.constBegin(), outputVec.constEnd(),
-                                             0, [] (int acc, const QString& s) {
+        auto output_size = std::accumulate(outputVec.cbegin(), outputVec.cend(),
+                                             0, [] (size_t acc, const QString& s) {
                                                  return acc + s.length();
                                              });
         outputData.resize(output_size);
-        std::accumulate(outputVec.cbegin(), outputVec.cend(), outputData.begin(),
+        std::accumulate(outputVec.cbegin(), outputVec.cend(), outputData.cbegin(),
                         [] (const auto& dest, const QString& s) {
-                            return std::copy(s.cbegin(), s.cend(), dest);
+                            return std::copy(s.cbegin(), s.cbegin(), dest);
                         });
 
         // Write to file
-        QString outputPath = m_outputFolder.filePath(m_outputFile);
+        auto outputPath = m_outputFolder.filePath(m_outputFile);
         QFile csvFile(outputPath);
         if (csvFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
 
@@ -259,7 +261,7 @@ bool StepTable::readFromCSV()
     // Make sure that the table is empty before we try to add to it
     clearAllSteps();
 
-    QString outputPath = m_outputFolder.filePath(m_outputFile);
+    auto outputPath = m_outputFolder.filePath(m_outputFile);
     QFile csvFile(outputPath);
 
     // Parse file into internal structs first
@@ -267,14 +269,13 @@ bool StepTable::readFromCSV()
         QTextStream dataStream(&csvFile);
         bool firstLine{true};
         while (!dataStream.atEnd()) {
-            QString line = dataStream.readLine();
+            auto line = dataStream.readLine();
             // Skip the headings
             if (firstLine){
                 firstLine = false;
                 continue;
             }
-            QStringList fields = line.split(",");
-
+            auto fields = line.split(",");
 
             for (int i = 0; i < m_lastOccupiedPosition.size(); ++i) {
                 if (fields[i].isEmpty()) continue;

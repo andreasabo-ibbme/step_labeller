@@ -60,7 +60,7 @@ void MainWindow::initUI()
 
     // Set up the menubar
     fileMenu = menuBar()->addMenu("&File");
-    QGridLayout *main_layout = new QGridLayout();
+    auto *main_layout = new QGridLayout(this);
 
 
     // Set up the playback area
@@ -69,7 +69,7 @@ void MainWindow::initUI()
     m_imageView->setFocusPolicy(Qt::StrongFocus);
 
     // Set up file table view
-    m_fileTable = new FileTable();
+    m_fileTable = new FileTable(this);
     main_layout->addWidget(m_fileTable, 0, 0, 10, 2);
 
     // Set up playback window and m_controls
@@ -77,7 +77,7 @@ void MainWindow::initUI()
     main_layout->addWidget(m_controls, 10, 2, 1, 5);
 
     // Set up step table view
-    m_table = new StepTable();
+    m_table = new StepTable(this);
     main_layout->addWidget(m_table, 0, 7, 10, 2);
 
     // Clear step table button
@@ -91,7 +91,7 @@ void MainWindow::initUI()
     main_layout->addWidget(m_saveStepsButton, 10, 8, 1, 1, Qt::AlignCenter);
 
     // Set the layout for the main window
-    QWidget *layout_widget = new QWidget(this);
+    auto *layout_widget = new QWidget(this);
     layout_widget->setLayout(main_layout);
     setCentralWidget(layout_widget);
 
@@ -158,10 +158,10 @@ void MainWindow::updateFrame(cv::Mat* mat, qint64 frameNum)
                 QImage::Format_RGB888);
 
     // Resize the image so it fits within the m_imageView
-    QSize viewrect_size = m_imageView->viewport()->size();
+    auto viewrect_size = m_imageView->viewport()->size();
     frame = frame.scaled(viewrect_size, Qt::KeepAspectRatio);
 
-    QPixmap image = QPixmap::fromImage(frame);
+    auto image = QPixmap::fromImage(frame);
 
     m_imageScene->clear();
     m_imageView->resetTransform();

@@ -132,15 +132,7 @@ void CaptureThread::setState(QMediaPlayer::State state)
 void CaptureThread::play()
 {
     qDebug() << "CaptureThread::play()";
-//    exec();
     setState(QMediaPlayer::PlayingState);
-
-//    if (m_state == QMediaPlayer::StoppedState) {
-//        setState(QMediaPlayer::PlayingState);
-//        this->run();
-//    }
-//    setState(QMediaPlayer::PlayingState);
-
 }
 
 void CaptureThread::pause()
