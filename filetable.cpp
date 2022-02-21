@@ -33,7 +33,7 @@ void FileTable::fillTableWithFiles(QFileInfoList files, QString footfallFolder, 
     m_rootFolder = videoFolder;
     m_stepFormat = stepFormat;
     // Add new items
-    auto columnToInsertAt = static_cast<qint16>(FileTableRowName::FileName);
+    auto columnToInsertAt = static_cast<qint64>(FileTableRowName::FileName);
 
     for (auto &file : files) {
          auto curFileName = file.fileName();
@@ -59,7 +59,7 @@ void FileTable::handleItemDoubleClicked(QTableWidgetItem *item)
 {
     // If a video name was selected, get the full file name and
     // emit signal to play the selected one.
-    auto fileColumn = static_cast<qint16>(FileTableRowName::FileName);
+    auto fileColumn = static_cast<qint64>(FileTableRowName::FileName);
     if (item->column() != fileColumn)
         return;
 
@@ -70,8 +70,8 @@ void FileTable::setLabelStatus(qint64 rowToInsertAt, QString stepFormat)
 {
     auto testIcon = this->style()->standardIcon(QStyle::SP_DialogCancelButton);
 
-    auto fileCol = static_cast<qint16>(FileTableRowName::FileName);
-    auto statusCol = static_cast<qint16>(FileTableRowName::StepStatus);
+    auto fileCol = static_cast<qint64>(FileTableRowName::FileName);
+    auto statusCol = static_cast<qint64>(FileTableRowName::StepStatus);
 
     auto curFileName = m_table->item(rowToInsertAt, fileCol)->data(Qt::DisplayRole);
     QFileInfo footfallFileInfo = QFileInfo(QDir(m_footfall_folder), QFileInfo(curFileName.toString()).completeBaseName() + stepFormat);

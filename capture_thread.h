@@ -46,7 +46,7 @@ private:
     void previous();
     void stop();
     void rateChanged(qreal new_rate);
-    void frameChanged(qint32 frame);
+    void frameChanged(qint64 frame);
     void togglePlayPause();
 
 

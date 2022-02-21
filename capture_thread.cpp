@@ -192,7 +192,7 @@ void CaptureThread::rateChanged(qreal new_rate)
     delay_ms = 1/playback_fps * 1000;
 }
 
-void CaptureThread::frameChanged(qint32 frame)
+void CaptureThread::frameChanged(qint64 frame)
 {
     auto num_frames = m_cap.get(cv::CAP_PROP_FRAME_COUNT);
     if (frame < 0 | frame > num_frames - 1)

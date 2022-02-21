@@ -34,7 +34,7 @@ StepTable::~StepTable()
     delete m_table; // Not needed because we set parent to this when creating the table
 }
 
-void StepTable::insertRow(qint16 row)
+void StepTable::insertRow(qint64 row)
 {
     m_table->insertRow(row);
 }
@@ -107,7 +107,7 @@ void StepTable::resetForNext(QDir output_dir, QString output_file)
     auto successRead = readFromCSV();
 }
 
-void StepTable::removeStep(qint16 row, qint16 col){
+void StepTable::removeStep(qint64 row, qint64 col){
     // Can't delete if there isn't anything there to delete
     if (row >= m_lastOccupiedPosition[col])
         return;
@@ -119,7 +119,7 @@ void StepTable::removeStep(qint16 row, qint16 col){
 
 void StepTable::addStep(qint64 frameNum, BodySide side) {
     m_algorithmicStepAdd = true;
-    auto columnToInsertAt = static_cast<qint16>(side);
+    auto columnToInsertAt = static_cast<qint64>(side);
     auto rowToInsertAt = m_lastOccupiedPosition[columnToInsertAt];
 
     // TODO: make sure we don't insert duplicates
@@ -144,7 +144,7 @@ void StepTable::addStep(qint64 frameNum, BodySide side) {
     m_algorithmicStepAdd = false;
 }
 
-void StepTable::sortColumn(qint16 col)
+void StepTable::sortColumn(qint64 col)
 {
     // Resort the column in a way that is independent from the others
     std::sort(m_heelStrikeList[col].begin(), m_heelStrikeList[col].end());
@@ -155,7 +155,7 @@ void StepTable::sortColumn(qint16 col)
     }
 }
 
-bool StepTable::alreadyInColumn(qint16 col, qint64 frameNum)
+bool StepTable::alreadyInColumn(qint64 col, qint64 frameNum)
 {
     for (auto &a : m_heelStrikeList[col]) {
         if (a == frameNum)

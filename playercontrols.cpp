@@ -59,6 +59,7 @@
 #include <QStyle>
 #include <QToolButton>
 
+
 #include <QDebug>
 
 PlayerControls::PlayerControls(qreal fps_start, QWidget *parent)
@@ -178,14 +179,14 @@ void PlayerControls::playClicked()
     switch (m_playerState) {
     case QMediaPlayer::StoppedState:
         qDebug() << "QMediaPlayer::StoppedState";
+        emit play();
+        break;
     case QMediaPlayer::PausedState:
         qDebug() << "QMediaPlayer::PausedState";
-
         emit play();
         break;
     case QMediaPlayer::PlayingState:
         qDebug() << "QMediaPlayer::PlayingState";
-
         emit pause();
         break;
     }
@@ -215,7 +216,7 @@ void PlayerControls::onVolumeSliderValueChanged()
 
 void PlayerControls::updateFrame()
 {
-    qint32 frame = m_frame_box->text().toInt();
+    qint64 frame = m_frame_box->text().toInt();
     qDebug() << "PlayerControls::updateFrame(): " << frame;
     emit changeFrame(frame);
 }

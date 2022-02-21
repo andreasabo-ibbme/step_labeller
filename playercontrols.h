@@ -89,7 +89,7 @@ signals:
     void changeVolume(int volume);
     void changeMuting(bool muting);
     void changeRate(qreal rate);
-    void changeFrame(qint32 frame);
+    void changeFrame(qint64 frame);
 
 private slots:
     void playClicked();
