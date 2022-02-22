@@ -39,51 +39,38 @@ private:
     void connectPlaybackControls();
     void connectCaptureControls();
 
-public slots:
-    void changeVideo(QString video);
-
 private slots:
-    void showCameraInfo();
-    void openCamera();
     void updateFrame(cv::Mat* frame, qint64 frameNum);
     void updateFPS(float fps);
     void findVideos();
     void openVideo(QString video);
-    void exportSteps();
-
 
 private:
+    // Menu items
     QMenu *fileMenu;
-    QAction *cameraInfoAction;
-    QAction *openCameraAction;
     QAction *exitAction;
     QAction *openVidsAction;
 
-    QGraphicsScene *imageScene;
-    QGraphicsView *imageView;
+    // Buttons
+    QPushButton *m_clearStepsButton;
+    QPushButton *m_saveStepsButton;
+    QStatusBar *m_mainStatusBar;
+    QLabel *m_mainStatusLabel;
 
-    QCheckBox *monitorCheckBox;
-    QPushButton *findVideosButton;
-    QPushButton *m_startExportButton;
+    // Video playback
+    QGraphicsScene *m_imageScene;
+    QGraphicsView *m_imageView;
+    cv::Mat m_currentFrame;
+    std::mutex *m_data_lock;
 
-    QListView *saved_list;
-
-    QStatusBar *mainStatusBar;
-    QLabel *mainStatusLabel;
-
-    cv::Mat currentFrame;
-    std::mutex *data_lock;
-    CaptureThread *capturer;
-    PlayerControls *controls;
-
-    // To move to videolist widget
-    QFileInfoList m_video_list;
-
+    // Sub components
     StepTable *m_table;
     FileTable *m_fileTable;
-    qint64 m_frameNum;
+    CaptureThread *m_capturer;
+    PlayerControls *m_controls;
 
-    QString m_footfall_path;
+    qint64 m_frameNum;
     QString m_outputStepFormat;
+    QFont m_Font;
 };
 #endif // MAINWINDOW_H

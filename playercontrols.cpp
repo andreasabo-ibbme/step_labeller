@@ -102,8 +102,6 @@ PlayerControls::PlayerControls(qreal fps_start, QWidget *parent)
     layout->addWidget(m_previousButton);
     layout->addWidget(m_playButton);
     layout->addWidget(m_nextButton);
-//    layout->addWidget(m_muteButton);
-//    layout->addWidget(m_volumeSlider);
     layout->addWidget(m_fps_label);
     layout->addWidget(m_fps_box);
     layout->addWidget(m_frame_label);
@@ -144,7 +142,6 @@ int PlayerControls::volume() const
     qreal linearVolume =  QAudio::convertVolume(m_volumeSlider->value() / qreal(100),
                                                 QAudio::LogarithmicVolumeScale,
                                                 QAudio::LinearVolumeScale);
-
     return qRound(linearVolume * 100);
 }
 
@@ -178,14 +175,14 @@ void PlayerControls::playClicked()
     switch (m_playerState) {
     case QMediaPlayer::StoppedState:
         qDebug() << "QMediaPlayer::StoppedState";
+        emit play();
+        break;
     case QMediaPlayer::PausedState:
         qDebug() << "QMediaPlayer::PausedState";
-
         emit play();
         break;
     case QMediaPlayer::PlayingState:
         qDebug() << "QMediaPlayer::PlayingState";
-
         emit pause();
         break;
     }
@@ -215,7 +212,5 @@ void PlayerControls::onVolumeSliderValueChanged()
 
 void PlayerControls::updateFrame()
 {
-    qint32 frame = m_frame_box->text().toInt();
-    qDebug() << "PlayerControls::updateFrame(): " << frame;
-    emit changeFrame(frame);
+    emit changeFrame(m_frame_box->text().toInt());
 }

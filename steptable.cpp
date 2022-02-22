@@ -1,5 +1,6 @@
 #include "steptable.h"
 
+#include <numeric>
 #include <QGridLayout>
 #include <QHeaderView>
 #include <QDebug>
@@ -14,12 +15,12 @@ StepTable::StepTable(QWidget *parent) : QWidget(parent)
     }
 
     m_table = new QTableWidget(1, static_cast<qint64>(BodySide::COUNT), this);
-    m_table->setHorizontalHeaderLabels(QStringList() << "Left" << "Right"); // TODO: use BodySide enum to assign header labels
+
+    setColumnNames();
 
     // Fix the style of the header to be consistent with rest of the table
     styleHeader();
-    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch );
-//    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive );
+
     // Set layout for this widget
     QGridLayout *layout = new QGridLayout();
     layout->addWidget(m_table, 0, 0);
@@ -31,10 +32,10 @@ StepTable::StepTable(QWidget *parent) : QWidget(parent)
 
 StepTable::~StepTable()
 {
-    delete m_table; // Not needed because we set parent this this when creating the table
+    delete m_table; // Not needed because we set parent to this when creating the table
 }
 
-void StepTable::insertRow(qint16 row)
+void StepTable::insertRow(qint64 row)
 {
     m_table->insertRow(row);
 }
@@ -58,7 +59,7 @@ void StepTable::handleCellChanged(QTableWidgetItem *item)
     }
     auto row = item->row();
     auto col = item->column();
-    auto frame_num = item->data(Qt::EditRole);
+    auto frame_num = item->data(Qt::DisplayRole);
 
     // If the frame_num is empty, we want to delete the contents
     if (item->text() == ""){
@@ -66,10 +67,9 @@ void StepTable::handleCellChanged(QTableWidgetItem *item)
         return;
     }
 
-    if (!frame_num.toInt()) {
-        qDebug() << "Entry was not an integer";
-        // Remove the contents of the cell
-        item->setData(Qt::EditRole, "");
+    // Non-integer input or duplicate entry
+    if (!frame_num.toInt() || alreadyInColumn(col, frame_num.toInt())){
+        item->setData(Qt::DisplayRole, "");
         sortColumn(col);
         return;
     }
@@ -79,23 +79,43 @@ void StepTable::handleCellChanged(QTableWidgetItem *item)
         addStep(frame_num.toInt(), BodySide(col));
     }
     else { // Modifying existing entry
-        // TODO: make sure we don't insert duplicates
-        if (alreadyInColumn(col, frame_num.toInt())){
-            qDebug() << "Already have " << frame_num << " in table";
-            return;
-        }
-
         m_heelStrikeList[col][row] = frame_num.toInt();
         sortColumn(col);
-
     }
-
-
-    // TODO: signal that can be accepted by mainwindow to change
-    // focus back to the playback window
 }
 
-void StepTable::removeStep(qint16 row, qint16 col){
+void StepTable::makeOutputFolder() {
+    if (!m_outputFolder.exists()) {
+        m_outputFolder.mkdir(".");
+    }
+}
+
+
+bool StepTable::saveFootfalls(bool forceSave)
+{
+    // Make sure the target folder exists (keep here because this is a public function)
+    makeOutputFolder();
+    return writeToCSV(forceSave);
+}
+
+
+
+void StepTable::resetForNext(QDir output_dir, QString output_file)
+{
+    // TODO: save to file
+    auto successSave = saveFootfalls(false);
+
+    // TODO: How to handle failure
+
+    // Extract the parts of the new video name
+    m_outputFile = output_file;
+    m_outputFolder = output_dir;
+
+    // Load footfalls if available, otherwise just reset table
+    auto successRead = readFromCSV();
+}
+
+void StepTable::removeStep(qint64 row, qint64 col){
     // Can't delete if there isn't anything there to delete
     if (row >= m_lastOccupiedPosition[col])
         return;
@@ -107,48 +127,182 @@ void StepTable::removeStep(qint16 row, qint16 col){
 
 void StepTable::addStep(qint64 frameNum, BodySide side) {
     m_algorithmicStepAdd = true;
-    auto columnToInsertAt = static_cast<qint16>(side);
+    auto columnToInsertAt = static_cast<qint64>(side);
     auto rowToInsertAt = m_lastOccupiedPosition[columnToInsertAt];
 
-    // TODO: make sure we don't insert duplicates
     if (alreadyInColumn(columnToInsertAt, frameNum)){
         return;
     }
 
-    if (rowToInsertAt == m_table->rowCount())
+    if (rowToInsertAt == m_table->rowCount()) {
         insertRow(rowToInsertAt);
+    }
 
     // This allows the underlying QVariant in QTableWidgetItem to keep track
     // of the datatype rather than forcing a cast to QString.
     auto item = new QTableWidgetItem;
-    item->setData(Qt::EditRole, frameNum);
+    item->setData(Qt::DisplayRole, frameNum);
     m_table->setItem(rowToInsertAt, columnToInsertAt, std::move(item));
 
-    // Resort the current column independently from others
+    // Re-sort the current column independently from others
     m_heelStrikeList[columnToInsertAt].push_back(frameNum);
-    sortColumn(columnToInsertAt);
-
     m_lastOccupiedPosition[columnToInsertAt]++;
-
+    sortColumn(columnToInsertAt);
     m_algorithmicStepAdd = false;
 }
 
-void StepTable::sortColumn(qint16 col)
+void StepTable::sortColumn(qint64 col)
 {
     // Resort the column in a way that is independent from the others
     std::sort(m_heelStrikeList[col].begin(), m_heelStrikeList[col].end());
-    for (auto row = 0; row < m_heelStrikeList[col].size(); row++)
-    {
+    for (auto row = 0; row < m_heelStrikeList[col].size(); row++) {
         auto curItem = m_table->item(row, col);
-        curItem->setData(Qt::EditRole, m_heelStrikeList[col][row]);
+        curItem->setData(Qt::DisplayRole, m_heelStrikeList[col][row]);
     }
+
+    // Insert extra empty row in the display to allow manual addition of steps
+    m_table->setRowCount(getMaxRows() + 1);
 }
 
-bool StepTable::alreadyInColumn(qint16 col, qint64 frameNum)
+bool StepTable::alreadyInColumn(qint64 col, qint64 frameNum)
 {
     for (auto &a : m_heelStrikeList[col]) {
         if (a == frameNum)
             return true;
+    }
+    return false;
+}
+
+qint64 StepTable::getMaxRows()
+{
+    return *std::max_element(m_lastOccupiedPosition.cbegin(), m_lastOccupiedPosition.cend());
+}
+
+QVector<QString> StepTable::formatStepsForCSV()
+{
+    // Format the header
+    QString headerData;
+    for (auto& heading: m_sides) {
+        headerData += heading + ",";
+    }
+    headerData.chop(1); // Remove the last comma and replace with a newline
+    headerData += "\n";
+
+    // Format the data string
+    auto maxRows = getMaxRows();
+    QVector<QString> outputVec;
+    outputVec.reserve(maxRows + 1);
+    outputVec.append(headerData);
+
+    for (int row = 0; row < maxRows; row++) {
+        QString curData;
+        curData.reserve(sizeof(char) * 100);
+
+        for (int col = 0; col < m_heelStrikeList.size(); col++) {
+            // Extract data if we have it, or just output empty cell
+            if (m_heelStrikeList[col].size() > row) {
+                curData.append(QString::number(m_heelStrikeList[col][row]) + ",");
+            }
+            else {
+                curData.append(",");
+            }
+
+        }
+        curData.chop(1); // Remove trailing comma
+        curData.append("\n");
+        outputVec.append(curData);
+    }
+
+    return outputVec;
+}
+
+void StepTable::clearAllSteps()
+{
+    // Clear the internal record-keeping
+    for (auto& item : m_heelStrikeList) {
+        item.clear();
+    }
+
+    for (auto& item : m_lastOccupiedPosition) {
+        item = 0;
+    }
+
+    // Clear the display
+    m_table->setRowCount(0);
+
+    // Reset to one empty row to allow for manual addition of steps
+    m_table->setRowCount(1);
+
+}
+
+bool StepTable::writeToCSV(bool forceSave=false)
+{
+    if (!forceSave && !getMaxRows()) return false;
+    try {
+        // https://stackoverflow.com/questions/27353026/qtableview-output-save-as-csv-or-txt
+        qDebug() << "Writing to CSV: " << m_outputFile;
+        auto outputVec = formatStepsForCSV();
+        QString outputData;
+
+        // Reformat from vector of strings to one string
+        // https://www.qt.io/blog/efficient-qstring-concatenation-with-c17-fold-expressions
+        auto output_size = std::accumulate(outputVec.cbegin(), outputVec.cend(),
+                                             0, [] (size_t acc, const QString& s) {
+                                                 return acc + s.length();
+                                             });
+        outputData.resize(output_size);
+        std::accumulate(outputVec.cbegin(), outputVec.cend(), outputData.begin(),
+                        [] (const auto& dest, const QString& s) {
+                            return std::copy(s.cbegin(), s.cend(), dest);
+                        });
+
+        // Write to file
+        auto outputPath = m_outputFolder.filePath(m_outputFile);
+        QFile csvFile(outputPath);
+        if (csvFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+
+            QTextStream out(&csvFile);
+            out << outputData;
+            csvFile.close();
+            emit updatedCSVFile();
+            return true;
+        }
+        return false; // Weren't able to write to file
+    }
+    catch (...) {
+        // Failed to write to file
+        return false;
+    }
+}
+
+bool StepTable::readFromCSV()
+{
+    // Make sure that the table is empty before we try to add to it
+    clearAllSteps();
+
+    auto outputPath = m_outputFolder.filePath(m_outputFile);
+    QFile csvFile(outputPath);
+
+    // Parse file into internal structs first
+    if (csvFile.open(QIODevice::ReadOnly | QIODevice::Truncate)) {
+        QTextStream dataStream(&csvFile);
+        bool firstLine{true};
+        while (!dataStream.atEnd()) {
+            auto line = dataStream.readLine();
+            // Skip the headings
+            if (firstLine){
+                firstLine = false;
+                continue;
+            }
+            auto fields = line.split(",");
+
+            for (int i = 0; i < m_lastOccupiedPosition.size(); ++i) {
+                if (fields[i].isEmpty()) continue;
+                addStep(fields[i].toInt(), static_cast<BodySide>(i));
+            }
+        }
+        csvFile.close();
+        return true;
     }
     return false;
 }
@@ -172,4 +326,15 @@ void StepTable::styleHeader()
             "border-bottom: 1px solid #D8D8D8;"
             "background-color:white;"
         "}" );
+}
+
+void StepTable::setColumnNames()
+{
+    // Dynamically setting column names
+    QStringList colLabels;
+    for (auto& side: m_sides) {
+        colLabels << side;
+    }
+    m_table->setHorizontalHeaderLabels(colLabels);
+    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 }

@@ -14,6 +14,7 @@ FileTable::FileTable(QWidget *parent) : QWidget(parent), m_lastOccupiedPosition{
     styleHeader();
     m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch );
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
     // Set layout for this widget
     QGridLayout *layout = new QGridLayout();
     layout->addWidget(m_table, 0, 0);
@@ -28,11 +29,11 @@ void FileTable::fillTableWithFiles(QFileInfoList files, QString footfallFolder, 
     // Remove all contents before trying to add
     m_lastOccupiedPosition = 0;
     m_table->setRowCount(0);
-
+    m_footfall_folder = footfallFolder;
     m_rootFolder = videoFolder;
     m_stepFormat = stepFormat;
     // Add new items
-    auto columnToInsertAt = static_cast<qint16>(FileTableRowName::FileName);
+    auto columnToInsertAt = static_cast<qint64>(FileTableRowName::FileName);
 
     for (auto &file : files) {
          auto curFileName = file.fileName();
@@ -44,8 +45,20 @@ void FileTable::fillTableWithFiles(QFileInfoList files, QString footfallFolder, 
          m_table->setItem(m_lastOccupiedPosition, columnToInsertAt, std::move(new_item));
 
          // Update label status
-         setLabelStatus(m_lastOccupiedPosition, footfallFolder, stepFormat);
+         setLabelStatus(m_lastOccupiedPosition);
          m_lastOccupiedPosition++;
+    }
+}
+
+void FileTable::playFirstVideo()
+{
+    playVideoFromTable(m_table->itemAt(0,0));
+}
+
+void FileTable::updateFileLabelStatus()
+{
+    for (auto i = 0; i < m_lastOccupiedPosition; ++i) {
+        setLabelStatus(i);
     }
 }
 
@@ -53,33 +66,40 @@ void FileTable::handleItemDoubleClicked(QTableWidgetItem *item)
 {
     // If a video name was selected, get the full file name and
     // emit signal to play the selected one.
-    auto fileColumn = static_cast<qint16>(FileTableRowName::FileName);
+    auto fileColumn = static_cast<qint64>(FileTableRowName::FileName);
     if (item->column() != fileColumn)
         return;
 
-    qDebug() << item->column() <<  fileColumn <<"handleItemDoubleClicked";
-    QString localPath = item->data(Qt::EditRole).toString();
-    QString videoName = m_rootFolder.filePath(localPath);
-    emit playVideoByName(videoName);
+    playVideoFromTable(item);
 }
 
-void FileTable::setLabelStatus(qint64 rowToInsertAt, QString footfallFolder, QString stepFormat)
+void FileTable::setLabelStatus(qint64 rowToInsertAt)
 {
     auto testIcon = this->style()->standardIcon(QStyle::SP_DialogCancelButton);
 
-    auto fileCol = static_cast<qint16>(FileTableRowName::FileName);
-    auto statusCol = static_cast<qint16>(FileTableRowName::StepStatus);
+    auto fileCol = static_cast<qint64>(FileTableRowName::FileName);
+    auto statusCol = static_cast<qint64>(FileTableRowName::StepStatus);
 
-    auto curFileName = m_table->item(rowToInsertAt, fileCol)->data(Qt::EditRole);
-    auto footfallFileName = QDir(footfallFolder).filePath(curFileName.toString() + stepFormat);
+    auto curFileName = m_table->item(rowToInsertAt, fileCol)->data(Qt::DisplayRole);
+    QFileInfo footfallFileInfo = QFileInfo(QDir(m_footfall_folder), QFileInfo(curFileName.toString()).completeBaseName() + m_stepFormat);
 
-
-    if (QFile::exists(footfallFileName))
+    if (footfallFileInfo.exists()) {
         testIcon = this->style()->standardIcon(QStyle::SP_DialogApplyButton);
+    }
 
     auto new_item = new QTableWidgetItem(testIcon, "");
     m_table->setItem(rowToInsertAt, statusCol, std::move(new_item));
 
+}
+
+void FileTable::playVideoFromTable(const QTableWidgetItem *item)
+{
+    QString localPath = item->data(Qt::DisplayRole).toString();
+    QString videoName = m_rootFolder.filePath(localPath);
+
+    // TODO: check if this succeeded before moving onto playing the video
+    emit sendFootfallOutputMetaData(m_rootFolder.filePath(m_footfall_folder), QFileInfo(localPath).completeBaseName() + m_stepFormat);
+    emit playVideoByName(videoName);
 }
 
 void FileTable::styleHeader()
