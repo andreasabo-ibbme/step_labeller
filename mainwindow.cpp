@@ -59,7 +59,7 @@ void MainWindow::initUI()
 
     // Set up the menubar
     fileMenu = menuBar()->addMenu("&File");
-    auto *main_layout = new QGridLayout(this);
+    auto *main_layout = new QGridLayout();
 
 
     // Set up the playback area
