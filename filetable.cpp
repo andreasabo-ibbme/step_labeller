@@ -1,18 +1,19 @@
 #include "filetable.h"
 
+#include <algorithm>
 #include <QGridLayout>
 #include <QHeaderView>
 #include <QDebug>
 #include <QDir>
 
-FileTable::FileTable(QWidget *parent) : QWidget(parent), m_lastOccupiedPosition{}
+FileTable::FileTable(QWidget *parent) : QWidget(parent), m_lastOccupiedPosition{}, m_acceptableFormats{"avi", "mov", "mp4"}
 {
     m_table = new QTableWidget(1, static_cast<qint64>(FileTableRowName::COUNT), this);
     m_table->setHorizontalHeaderLabels(QStringList() << "File Name" << "Have Exported Steps?"); // TODO: use FileTableRowName enum to assign header labels
 
     // Fix the style of the header to be consistent with rest of the table
     styleHeader();
-    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch );
+    m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     // Set layout for this widget
@@ -22,6 +23,14 @@ FileTable::FileTable(QWidget *parent) : QWidget(parent), m_lastOccupiedPosition{
     setLayout(layout);
     connect(m_table, &QTableWidget::itemDoubleClicked, this, &FileTable::handleItemDoubleClicked);
 
+}
+
+bool FileTable::isValidVideo(const QString& file) {
+    auto suffix = QFileInfo(file).suffix().toLower();
+    if (std::find(m_acceptableFormats.begin(), m_acceptableFormats.end(), suffix) == m_acceptableFormats.end()) {
+        return false;
+    }
+    return true;
 }
 
 void FileTable::fillTableWithFiles(QFileInfoList files, QString footfallFolder, QDir videoFolder, QString stepFormat)
@@ -37,6 +46,12 @@ void FileTable::fillTableWithFiles(QFileInfoList files, QString footfallFolder, 
 
     for (auto &file : files) {
          auto curFileName = file.fileName();
+
+         // Only add allowed videos
+         if (!isValidVideo(curFileName)) {
+             continue;
+         }
+
          auto new_item = new QTableWidgetItem(curFileName);
 
          if (m_lastOccupiedPosition == m_table->rowCount())
@@ -52,7 +67,12 @@ void FileTable::fillTableWithFiles(QFileInfoList files, QString footfallFolder, 
 
 void FileTable::playFirstVideo()
 {
-    playVideoFromTable(m_table->itemAt(0,0));
+    if (m_lastOccupiedPosition < 1) {
+        emit failedToPlayVideo("");
+    }
+    else {
+        playVideoFromTable(m_table->itemAt(0,0));
+    }
 }
 
 void FileTable::updateFileLabelStatus()
@@ -89,7 +109,6 @@ void FileTable::setLabelStatus(qint64 rowToInsertAt)
 
     auto new_item = new QTableWidgetItem(testIcon, "");
     m_table->setItem(rowToInsertAt, statusCol, std::move(new_item));
-
 }
 
 void FileTable::playVideoFromTable(const QTableWidgetItem *item)

@@ -196,6 +196,7 @@ void MainWindow::findVideos()
          m_fileTable->playFirstVideo();
      }
      else {
+         qDebug() << "caught in: " << "MainWindow::findVideos()";
          // TODO: error handling if did not select dir correctly. IE. non-playable files in folder
      }
 }

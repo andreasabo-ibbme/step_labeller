@@ -19,6 +19,7 @@ public:
 signals:
     void playVideoByName(QString video);
     void sendFootfallOutputMetaData(QDir m_rootFolder, QString outputFile);
+    void failedToPlayVideo(QString video);
 
 public slots:
     void updateFileLabelStatus();
@@ -29,6 +30,7 @@ private slots:
 private:
     void setLabelStatus(qint64 rowToInsertAt);
     void playVideoFromTable(const QTableWidgetItem *item);
+    bool isValidVideo(const QString& file);
 
 private:
     void styleHeader();
@@ -37,6 +39,7 @@ private:
     QDir m_rootFolder;
     QString m_footfall_folder;
     QString m_stepFormat;
+    QVector<QString> m_acceptableFormats;
 };
 
 #endif // FILETABLE_H
