@@ -2,3 +2,6 @@
 *.user
 *.user
 StepLabeller.pro.user
+debug/
+object_script*
+Makefile*

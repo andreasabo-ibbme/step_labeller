@@ -68,7 +68,7 @@ void FileTable::fillTableWithFiles(QFileInfoList files, QString footfallFolder, 
 void FileTable::playFirstVideo()
 {
     if (m_lastOccupiedPosition < 1) {
-        emit failedToPlayVideo("");
+        emit failedToPlayVideo("The selected folder does not contain any playable videos");
     }
     else {
         playVideoFromTable(m_table->itemAt(0,0));

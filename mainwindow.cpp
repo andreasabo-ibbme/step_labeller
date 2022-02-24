@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "playercontrols.h"
-
+#include "popupwindow.h"
 
 #include <QCameraInfo>
 #include <QDebug>
@@ -8,6 +8,7 @@
 #include <QGridLayout>
 #include <QMenuBar>
 #include <QMessageBox>
+
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -122,6 +123,11 @@ void MainWindow::createActions()
     connect(m_fileTable, &FileTable::playVideoByName, this, &MainWindow::openVideo);
     connect(m_fileTable, &FileTable::sendFootfallOutputMetaData, m_table, &StepTable::resetForNext);
     connect(m_table, &StepTable::updatedCSVFile, m_fileTable, &FileTable::updateFileLabelStatus);
+
+    // Set up error model connections
+    connect(m_table, &StepTable::updatedCSVFile, m_fileTable, &FileTable::updateFileLabelStatus);
+
+    connect(m_fileTable, &FileTable::failedToPlayVideo, this, &MainWindow::openPopUp);
 }
 
 void MainWindow::connectPlaybackControls()
@@ -217,4 +223,12 @@ void MainWindow::openVideo(QString video)
     m_capturer->start();
     m_capturer->startCalcFPS(false);
     m_mainStatusLabel->setText(QString("Playing video from: %1").arg(video));
+}
+
+void MainWindow::openPopUp(QString message)
+{
+    qDebug() << "MainWindow::openPopUp" << message;
+    auto errWindow =  PopUpWindow (this, message);
+    errWindow.setModal(true);
+    errWindow.exec();
 }

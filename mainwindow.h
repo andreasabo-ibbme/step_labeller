@@ -44,6 +44,7 @@ private slots:
     void updateFPS(float fps);
     void findVideos();
     void openVideo(QString video);
+    void openPopUp(QString message);
 
 private:
     // Menu items
