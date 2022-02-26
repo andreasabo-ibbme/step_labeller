@@ -11,18 +11,20 @@ class StepTable : public QWidget
 {
     Q_OBJECT
 public:
-    explicit StepTable(QWidget *parent = nullptr);
+    explicit StepTable(QWidget *parent = nullptr, const QString stepFormat = ".csv");
     ~StepTable();
 
 signals:
     void updatedCSVFile();
+    void failedToSaveFootfalls(QString path);
+    void playVideoByName(QString video);
 
 public slots:
     void insertRow(qint64 row);
     void insertNewRightStep(qint64 frameNum);
     void insertNewLeftStep(qint64 frameNum);
     void handleCellChanged(QTableWidgetItem* item);
-    void resetForNext(QDir m_rootFolder, QString outputFile);
+    void resetForNext(QDir m_rootFolder, QString outputFile, QString nextVideo);
     bool saveFootfalls(bool forceSave);
     void clearAllSteps();
 
@@ -42,6 +44,7 @@ private:
 
     QString m_outputFile;
     QDir m_outputFolder;
+    QString m_stepFormat;
     QTableWidget *m_table;
     QVector<qint64> m_lastOccupiedPosition;
     QVector<QVector<qint64>> m_heelStrikeList;

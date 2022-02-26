@@ -6,7 +6,7 @@
 #include <QDebug>
 #include <QDir>
 
-FileTable::FileTable(QWidget *parent) : QWidget(parent), m_lastOccupiedPosition{}, m_acceptableFormats{"avi", "mov", "mp4"}
+FileTable::FileTable(QWidget *parent, const QString stepFormat) : QWidget(parent), m_lastOccupiedPosition{}, m_acceptableFormats{"avi", "mov", "mp4"}, m_stepFormat{stepFormat}
 {
     m_table = new QTableWidget(1, static_cast<qint64>(FileTableRowName::COUNT), this);
     m_table->setHorizontalHeaderLabels(QStringList() << "File Name" << "Have Exported Steps?"); // TODO: use FileTableRowName enum to assign header labels
@@ -33,14 +33,14 @@ bool FileTable::isValidVideo(const QString& file) {
     return true;
 }
 
-void FileTable::fillTableWithFiles(QFileInfoList files, QString footfallFolder, QDir videoFolder, QString stepFormat)
+void FileTable::fillTableWithFiles(QFileInfoList files, QString footfallFolder, QDir videoFolder)
 {
     // Remove all contents before trying to add
     m_lastOccupiedPosition = 0;
     m_table->setRowCount(0);
     m_footfall_folder = footfallFolder;
     m_rootFolder = videoFolder;
-    m_stepFormat = stepFormat;
+
     // Add new items
     auto columnToInsertAt = static_cast<qint64>(FileTableRowName::FileName);
 
@@ -114,11 +114,11 @@ void FileTable::setLabelStatus(qint64 rowToInsertAt)
 void FileTable::playVideoFromTable(const QTableWidgetItem *item)
 {
     QString localPath = item->data(Qt::DisplayRole).toString();
-    QString videoName = m_rootFolder.filePath(localPath);
+    QString nextVideo = m_rootFolder.filePath(localPath);
 
     // TODO: check if this succeeded before moving onto playing the video
-    emit sendFootfallOutputMetaData(m_rootFolder.filePath(m_footfall_folder), QFileInfo(localPath).completeBaseName() + m_stepFormat);
-    emit playVideoByName(videoName);
+    emit sendFootfallOutputMetaData(m_rootFolder.filePath(m_footfall_folder), localPath, nextVideo);
+    //emit playVideoByName(videoName);
 }
 
 void FileTable::styleHeader()

@@ -12,13 +12,12 @@ class FileTable : public QWidget
 {
     Q_OBJECT
 public:
-    explicit FileTable(QWidget *parent = nullptr);
-    void fillTableWithFiles(QFileInfoList files, QString footfallFolder, QDir videoFolder, QString stepFormat);
+    explicit FileTable(QWidget *parent = nullptr, const QString stepFormat = ".csv");
+    void fillTableWithFiles(QFileInfoList files, QString footfallFolder, QDir videoFolder);
     void playFirstVideo();
 
 signals:
-    void playVideoByName(QString video);
-    void sendFootfallOutputMetaData(QDir m_rootFolder, QString outputFile);
+    void sendFootfallOutputMetaData(QDir m_rootFolder, QString outputFile, QString nextVideo);
     void failedToPlayVideo(QString video);
 
 public slots:
@@ -38,8 +37,8 @@ private:
     qint64 m_lastOccupiedPosition;
     QDir m_rootFolder;
     QString m_footfall_folder;
-    QString m_stepFormat;
     QVector<QString> m_acceptableFormats;
+    QString m_stepFormat;
 };
 
 #endif // FILETABLE_H

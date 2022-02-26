@@ -62,14 +62,13 @@ void MainWindow::initUI()
     fileMenu = menuBar()->addMenu("&File");
     auto *main_layout = new QGridLayout();
 
-
     // Set up the playback area
     m_imageScene = new QGraphicsScene(this);
     m_imageView = new QGraphicsView(m_imageScene);
     m_imageView->setFocusPolicy(Qt::StrongFocus);
 
     // Set up file table view
-    m_fileTable = new FileTable(this);
+    m_fileTable = new FileTable(this, m_outputStepFormat);
     main_layout->addWidget(m_fileTable, 0, 0, 10, 2);
 
     // Set up playback window and m_controls
@@ -77,7 +76,7 @@ void MainWindow::initUI()
     main_layout->addWidget(m_controls, 10, 2, 1, 5);
 
     // Set up step table view
-    m_table = new StepTable(this);
+    m_table = new StepTable(this, m_outputStepFormat);
     main_layout->addWidget(m_table, 0, 7, 10, 2);
 
     // Clear step table button
@@ -120,14 +119,14 @@ void MainWindow::createActions()
     connect(exitAction, &QAction::triggered, this, &QApplication::quit);
 
     // Set up the connections for FileTable class
-    connect(m_fileTable, &FileTable::playVideoByName, this, &MainWindow::openVideo);
     connect(m_fileTable, &FileTable::sendFootfallOutputMetaData, m_table, &StepTable::resetForNext);
+    connect(m_table, &StepTable::playVideoByName, this, &MainWindow::openVideo);
     connect(m_table, &StepTable::updatedCSVFile, m_fileTable, &FileTable::updateFileLabelStatus);
 
     // Set up error model connections
     connect(m_table, &StepTable::updatedCSVFile, m_fileTable, &FileTable::updateFileLabelStatus);
-
-    connect(m_fileTable, &FileTable::failedToPlayVideo, this, &MainWindow::openPopUp);
+    connect(m_fileTable, &FileTable::failedToPlayVideo, this, &MainWindow::stopPlaybackOnError);
+    connect(m_table, &StepTable::failedToSaveFootfalls, this, &MainWindow::stopPlaybackOnError);
 }
 
 void MainWindow::connectPlaybackControls()
@@ -197,7 +196,7 @@ void MainWindow::findVideos()
          auto video_list = myDir.entryInfoList(QDir::Files);
          auto footfallPath = myDir.filePath(default_footfall);
 
-         m_fileTable->fillTableWithFiles(video_list, footfallPath, myDir, m_outputStepFormat);
+         m_fileTable->fillTableWithFiles(video_list, footfallPath, myDir);
          // Automatically start playing the first video in the list
          m_fileTable->playFirstVideo();
      }
@@ -225,9 +224,8 @@ void MainWindow::openVideo(QString video)
     m_mainStatusLabel->setText(QString("Playing video from: %1").arg(video));
 }
 
-void MainWindow::openPopUp(QString message)
+void MainWindow::stopPlaybackOnError(QString message)
 {
-    qDebug() << "MainWindow::openPopUp" << message;
     auto errWindow =  PopUpWindow (this, message);
     errWindow.setModal(true);
     errWindow.exec();
