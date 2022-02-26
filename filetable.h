@@ -36,7 +36,7 @@ private:
     QTableWidget *m_table;
     qint64 m_lastOccupiedPosition;
     QDir m_rootFolder;
-    QString m_footfall_folder;
+    QString m_footfallFolder;
     QVector<QString> m_acceptableFormats;
     QString m_stepFormat;
 };

@@ -20,11 +20,11 @@ class CaptureThread : public QThread
     Q_OBJECT
 
 public:
-    CaptureThread(QString videoPath, std::mutex *lock, qreal playback_rate = 30);
+    CaptureThread(QString m_videoPath, std::mutex *lock, qreal playback_rate = 30);
     CaptureThread(int camera, std::mutex *lock, qreal playback_rate = 30);
 
     ~CaptureThread();
-    void setRunning(bool run) {running = run; }
+    void setRunning(bool run) {m_running = run; }
     void startCalcFPS(bool start);
 
 protected:
@@ -55,29 +55,28 @@ signals:
     void stateChanged(QMediaPlayer::State state);
 
 private:
-    bool running;
-    int cameraID;
-    QString videoPath;
-    std::mutex *data_lock;
-    cv::Mat frame;
-    float playback_fps;
-    float delay_ms;
+    bool m_running;
+    int m_cameraID;
+    QString m_videoPath;
+    std::mutex *m_dataLock;
+    cv::Mat m_frame;
+    float m_playbackFPS;
+    float m_delayMS;
 
     // OpenCV
     cv::VideoCapture m_cap;
-    cv::Mat tmp_frame;
+    cv::Mat m_tmpFrame;
 
     // Playback controls
     QMediaPlayer::State m_state = QMediaPlayer::StoppedState;
 
 
     // FPS calculating
-    bool fps_calculating;
-    static const int fps_samples = 100;
-    static const int fps_emit_every_samples = 20;
-    std::deque<float> time_samples;
-    float fps_sum;
-    int cur_fps_sample_count;
+    bool m_fpsCalculating;
+    static const int m_fpsSamples = 100;
+    std::deque<float> m_timeSamples;
+    float m_fpsSum;
+    int m_curFPSSampleCount;
 };
 
 #endif // CAPTURETHREAD_H

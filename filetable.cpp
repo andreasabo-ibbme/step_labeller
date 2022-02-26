@@ -9,7 +9,7 @@
 FileTable::FileTable(QWidget *parent, const QString stepFormat) : QWidget(parent), m_lastOccupiedPosition{}, m_acceptableFormats{"avi", "mov", "mp4"}, m_stepFormat{stepFormat}
 {
     m_table = new QTableWidget(1, static_cast<qint64>(FileTableRowName::COUNT), this);
-    m_table->setHorizontalHeaderLabels(QStringList() << "File Name" << "Have Exported Steps?"); // TODO: use FileTableRowName enum to assign header labels
+    m_table->setHorizontalHeaderLabels(QStringList() << "File Name" << "Have Exported Steps?");
 
     // Fix the style of the header to be consistent with rest of the table
     styleHeader();
@@ -116,9 +116,9 @@ void FileTable::playVideoFromTable(const QTableWidgetItem *item)
     QString localPath = item->data(Qt::DisplayRole).toString();
     QString nextVideo = m_rootFolder.filePath(localPath);
 
-    // TODO: check if this succeeded before moving onto playing the video
+    // Note: the slot in resetForNext in StepTable deals with the logic whether to
+    // play next video.
     emit sendFootfallOutputMetaData(m_rootFolder.filePath(m_footfall_folder), localPath, nextVideo);
-    //emit playVideoByName(videoName);
 }
 
 void FileTable::styleHeader()

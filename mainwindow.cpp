@@ -15,9 +15,9 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_capturer(nullptr), m_frameNum(0)
 {
     initUI();
-    m_data_lock = new std::mutex;
+    m_dataLock = new std::mutex;
     m_outputStepFormat = ".csv";
-    m_Font = QFont("Times", 16, QFont::Bold);
+    m_font = QFont("Times", 16, QFont::Bold);
 }
 
 MainWindow::~MainWindow()
@@ -59,7 +59,7 @@ void MainWindow::initUI()
     m_controls = new PlayerControls(default_fps, this);
 
     // Set up the menubar
-    fileMenu = menuBar()->addMenu("&File");
+    m_fileMenu = menuBar()->addMenu("&File");
     auto *main_layout = new QGridLayout();
 
     // Set up the playback area
@@ -108,15 +108,15 @@ void MainWindow::initUI()
 
 void MainWindow::createActions()
 {
-    exitAction = new QAction("E&xit", this);
-    openVidsAction = new QAction("Open Videos", this);
+    m_exitAction = new QAction("E&xit", this);
+    m_openVidsAction = new QAction("Open Videos", this);
 
-    fileMenu->addAction(openVidsAction);
-    fileMenu->addAction(exitAction);
+    m_fileMenu->addAction(m_openVidsAction);
+    m_fileMenu->addAction(m_exitAction);
 
-    // Set up the connections for fileMenu
-    connect(openVidsAction, &QAction::triggered, this, &MainWindow::findVideos);
-    connect(exitAction, &QAction::triggered, this, &QApplication::quit);
+    // Set up the connections for m_fileMenu
+    connect(m_openVidsAction, &QAction::triggered, this, &MainWindow::findVideos);
+    connect(m_exitAction, &QAction::triggered, this, &QApplication::quit);
 
     // Set up the connections for FileTable class
     connect(m_fileTable, &FileTable::sendFootfallOutputMetaData, m_table, &StepTable::resetForNext);
@@ -149,7 +149,7 @@ void MainWindow::updateFrame(cv::Mat* mat, qint64 frameNum)
 {
     {
         // Lock while updating the frame for display
-        std::lock_guard<std::mutex> lock(*m_data_lock);
+        std::lock_guard<std::mutex> lock(*m_dataLock);
         m_currentFrame = *mat;
         m_frameNum = frameNum;
     }
@@ -170,7 +170,7 @@ void MainWindow::updateFrame(cv::Mat* mat, qint64 frameNum)
     m_imageScene->clear();
     m_imageView->resetTransform();
     m_imageScene->addPixmap(image);
-    m_imageScene->addText(QString::number(frameNum), m_Font);
+    m_imageScene->addText(QString::number(frameNum), m_font);
 
     m_imageScene->update();
     m_imageView->setSceneRect(image.rect());
@@ -201,8 +201,7 @@ void MainWindow::findVideos()
          m_fileTable->playFirstVideo();
      }
      else {
-         qDebug() << "caught in: " << "MainWindow::findVideos()";
-         // TODO: error handling if did not select dir correctly. IE. non-playable files in folder
+         this->stopPlaybackOnError("Could not open the specified directory");
      }
 }
 
@@ -216,7 +215,7 @@ void MainWindow::openVideo(QString video)
         connect(m_capturer, &CaptureThread::finished, m_capturer, &CaptureThread::deleteLater);
     }
 
-    m_capturer = new CaptureThread(video, m_data_lock, m_controls->playbackRate());
+    m_capturer = new CaptureThread(video, m_dataLock, m_controls->playbackRate());
 
     connectPlaybackControls();
     m_capturer->start();
