@@ -1,6 +1,6 @@
-
+.vscode/*
 *.user
-*.user
+*.user.*
 StepLabeller.pro.user
 debug/
 object_script*
