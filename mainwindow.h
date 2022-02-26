@@ -44,12 +44,13 @@ private slots:
     void updateFPS(float fps);
     void findVideos();
     void openVideo(QString video);
+    void stopPlaybackOnError(QString message);
 
 private:
     // Menu items
-    QMenu *fileMenu;
-    QAction *exitAction;
-    QAction *openVidsAction;
+    QMenu *m_fileMenu;
+    QAction *m_exitAction;
+    QAction *m_openVidsAction;
 
     // Buttons
     QPushButton *m_clearStepsButton;
@@ -61,7 +62,7 @@ private:
     QGraphicsScene *m_imageScene;
     QGraphicsView *m_imageView;
     cv::Mat m_currentFrame;
-    std::mutex *m_data_lock;
+    std::mutex *m_dataLock;
 
     // Sub components
     StepTable *m_table;
@@ -71,6 +72,6 @@ private:
 
     qint64 m_frameNum;
     QString m_outputStepFormat;
-    QFont m_Font;
+    QFont m_font;
 };
 #endif // MAINWINDOW_H

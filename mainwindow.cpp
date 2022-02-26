@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "playercontrols.h"
-
+#include "popupwindow.h"
 
 #include <QCameraInfo>
 #include <QDebug>
@@ -10,13 +10,14 @@
 #include <QMessageBox>
 
 
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), m_capturer(nullptr), m_frameNum(0)
 {
     initUI();
-    m_data_lock = new std::mutex;
+    m_dataLock = new std::mutex;
     m_outputStepFormat = ".csv";
-    m_Font = QFont("Times", 16, QFont::Bold);
+    m_font = QFont("Times", 16, QFont::Bold);
 }
 
 MainWindow::~MainWindow()
@@ -58,9 +59,8 @@ void MainWindow::initUI()
     m_controls = new PlayerControls(default_fps, this);
 
     // Set up the menubar
-    fileMenu = menuBar()->addMenu("&File");
+    m_fileMenu = menuBar()->addMenu("&File");
     auto *main_layout = new QGridLayout();
-
 
     // Set up the playback area
     m_imageScene = new QGraphicsScene(this);
@@ -68,7 +68,7 @@ void MainWindow::initUI()
     m_imageView->setFocusPolicy(Qt::StrongFocus);
 
     // Set up file table view
-    m_fileTable = new FileTable(this);
+    m_fileTable = new FileTable(this, m_outputStepFormat);
     main_layout->addWidget(m_fileTable, 0, 0, 10, 2);
 
     // Set up playback window and m_controls
@@ -76,7 +76,7 @@ void MainWindow::initUI()
     main_layout->addWidget(m_controls, 10, 2, 1, 5);
 
     // Set up step table view
-    m_table = new StepTable(this);
+    m_table = new StepTable(this, m_outputStepFormat);
     main_layout->addWidget(m_table, 0, 7, 10, 2);
 
     // Clear step table button
@@ -108,20 +108,25 @@ void MainWindow::initUI()
 
 void MainWindow::createActions()
 {
-    exitAction = new QAction("E&xit", this);
-    openVidsAction = new QAction("Open Videos", this);
+    m_exitAction = new QAction("E&xit", this);
+    m_openVidsAction = new QAction("Open Videos", this);
 
-    fileMenu->addAction(openVidsAction);
-    fileMenu->addAction(exitAction);
+    m_fileMenu->addAction(m_openVidsAction);
+    m_fileMenu->addAction(m_exitAction);
 
-    // Set up the connections for fileMenu
-    connect(openVidsAction, &QAction::triggered, this, &MainWindow::findVideos);
-    connect(exitAction, &QAction::triggered, this, &QApplication::quit);
+    // Set up the connections for m_fileMenu
+    connect(m_openVidsAction, &QAction::triggered, this, &MainWindow::findVideos);
+    connect(m_exitAction, &QAction::triggered, this, &QApplication::quit);
 
     // Set up the connections for FileTable class
-    connect(m_fileTable, &FileTable::playVideoByName, this, &MainWindow::openVideo);
     connect(m_fileTable, &FileTable::sendFootfallOutputMetaData, m_table, &StepTable::resetForNext);
+    connect(m_table, &StepTable::playVideoByName, this, &MainWindow::openVideo);
     connect(m_table, &StepTable::updatedCSVFile, m_fileTable, &FileTable::updateFileLabelStatus);
+
+    // Set up error model connections
+    connect(m_table, &StepTable::updatedCSVFile, m_fileTable, &FileTable::updateFileLabelStatus);
+    connect(m_fileTable, &FileTable::failedToPlayVideo, this, &MainWindow::stopPlaybackOnError);
+    connect(m_table, &StepTable::failedToSaveFootfalls, this, &MainWindow::stopPlaybackOnError);
 }
 
 void MainWindow::connectPlaybackControls()
@@ -144,7 +149,7 @@ void MainWindow::updateFrame(cv::Mat* mat, qint64 frameNum)
 {
     {
         // Lock while updating the frame for display
-        std::lock_guard<std::mutex> lock(*m_data_lock);
+        std::lock_guard<std::mutex> lock(*m_dataLock);
         m_currentFrame = *mat;
         m_frameNum = frameNum;
     }
@@ -165,7 +170,7 @@ void MainWindow::updateFrame(cv::Mat* mat, qint64 frameNum)
     m_imageScene->clear();
     m_imageView->resetTransform();
     m_imageScene->addPixmap(image);
-    m_imageScene->addText(QString::number(frameNum), m_Font);
+    m_imageScene->addText(QString::number(frameNum), m_font);
 
     m_imageScene->update();
     m_imageView->setSceneRect(image.rect());
@@ -191,12 +196,12 @@ void MainWindow::findVideos()
          auto video_list = myDir.entryInfoList(QDir::Files);
          auto footfallPath = myDir.filePath(default_footfall);
 
-         m_fileTable->fillTableWithFiles(video_list, footfallPath, myDir, m_outputStepFormat);
+         m_fileTable->fillTableWithFiles(video_list, footfallPath, myDir);
          // Automatically start playing the first video in the list
          m_fileTable->playFirstVideo();
      }
      else {
-         // TODO: error handling if did not select dir correctly. IE. non-playable files in folder
+         this->stopPlaybackOnError("Could not open the specified directory");
      }
 }
 
@@ -210,10 +215,17 @@ void MainWindow::openVideo(QString video)
         connect(m_capturer, &CaptureThread::finished, m_capturer, &CaptureThread::deleteLater);
     }
 
-    m_capturer = new CaptureThread(video, m_data_lock, m_controls->playbackRate());
+    m_capturer = new CaptureThread(video, m_dataLock, m_controls->playbackRate());
 
     connectPlaybackControls();
     m_capturer->start();
     m_capturer->startCalcFPS(false);
     m_mainStatusLabel->setText(QString("Playing video from: %1").arg(video));
+}
+
+void MainWindow::stopPlaybackOnError(QString message)
+{
+    auto errWindow =  PopUpWindow (this, message);
+    errWindow.setModal(true);
+    errWindow.exec();
 }

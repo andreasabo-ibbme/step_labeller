@@ -6,7 +6,7 @@
 #include <QDebug>
 
 
-StepTable::StepTable(QWidget *parent) : QWidget(parent)
+StepTable::StepTable(QWidget *parent, const QString stepFormat) : QWidget(parent), m_stepFormat(stepFormat)
 {
     // Initially the table is empty so initialize occupied position to reflect that
     for (size_t i = 0; i < static_cast<qint64>(BodySide::COUNT); ++i){
@@ -15,7 +15,6 @@ StepTable::StepTable(QWidget *parent) : QWidget(parent)
     }
 
     m_table = new QTableWidget(1, static_cast<qint64>(BodySide::COUNT), this);
-
     setColumnNames();
 
     // Fix the style of the header to be consistent with rest of the table
@@ -100,19 +99,24 @@ bool StepTable::saveFootfalls(bool forceSave)
 
 
 
-void StepTable::resetForNext(QDir output_dir, QString output_file)
+void StepTable::resetForNext(QDir output_dir, QString localPath, QString nextVideo)
 {
-    // TODO: save to file
+    auto output_file = QFileInfo(localPath).completeBaseName() + m_stepFormat;
     auto successSave = saveFootfalls(false);
 
-    // TODO: How to handle failure
+    if (!successSave) {
+        emit failedToSaveFootfalls(QString("Failed to save footfalls for: " + localPath));
+        return;
+    }
+
+    emit playVideoByName(nextVideo);
 
     // Extract the parts of the new video name
     m_outputFile = output_file;
     m_outputFolder = output_dir;
 
     // Load footfalls if available, otherwise just reset table
-    auto successRead = readFromCSV();
+    readFromCSV();
 }
 
 void StepTable::removeStep(qint64 row, qint64 col){
@@ -237,7 +241,7 @@ void StepTable::clearAllSteps()
 
 bool StepTable::writeToCSV(bool forceSave=false)
 {
-    if (!forceSave && !getMaxRows()) return false;
+    if (!forceSave && !getMaxRows()) return true;
     try {
         // https://stackoverflow.com/questions/27353026/qtableview-output-save-as-csv-or-txt
         qDebug() << "Writing to CSV: " << m_outputFile;
