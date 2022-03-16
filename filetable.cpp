@@ -44,7 +44,7 @@ void FileTable::fillTableWithFiles(QFileInfoList files, QString footfallFolder, 
     // Remove all contents before trying to add
     m_lastOccupiedPosition = 0;
     m_table->setRowCount(0);
-    m_footfall_folder = footfallFolder;
+    m_footfallFolder = footfallFolder;
     m_rootFolder = videoFolder;
 
     // Add new items
@@ -106,7 +106,7 @@ void FileTable::setLabelStatus(qint64 rowToInsertAt)
     auto statusCol = static_cast<qint64>(FileTableRowName::StepStatus);
 
     auto curFileName = m_table->item(rowToInsertAt, fileCol)->data(Qt::DisplayRole);
-    QFileInfo footfallFileInfo = QFileInfo(QDir(m_footfall_folder),
+    QFileInfo footfallFileInfo = QFileInfo(QDir(m_footfallFolder),
                                            QFileInfo(curFileName.toString()).completeBaseName()
                                                + m_stepFormat);
 
@@ -125,7 +125,7 @@ void FileTable::playVideoFromTable(const QTableWidgetItem *item)
 
     // Note: the slot in resetForNext in StepTable deals with the logic whether to
     // play next video.
-    emit sendFootfallOutputMetaData(m_rootFolder.filePath(m_footfall_folder), localPath, nextVideo);
+    emit sendFootfallOutputMetaData(m_rootFolder.filePath(m_footfallFolder), localPath, nextVideo);
 }
 
 void FileTable::styleHeader()

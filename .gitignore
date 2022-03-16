@@ -5,3 +5,4 @@ StepLabeller.pro.user
 debug/
 object_script*
 Makefile*
+*.stash
