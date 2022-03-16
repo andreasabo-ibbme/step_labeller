@@ -9,10 +9,10 @@
 #include <QMenuBar>
 #include <QMessageBox>
 
-
-
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), m_capturer(nullptr), m_frameNum(0)
+    : QMainWindow(parent)
+    , m_capturer(nullptr)
+    , m_frameNum(0)
 {
     initUI();
     m_dataLock = new std::mutex;
@@ -20,15 +20,13 @@ MainWindow::MainWindow(QWidget *parent)
     m_font = QFont("Times", 16, QFont::Bold);
 }
 
-MainWindow::~MainWindow()
-{
-}
+MainWindow::~MainWindow() {}
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
     if (!m_capturer)
         return;
-    switch (event->key()){
+    switch (event->key()) {
     case Qt::Key_A:
         m_capturer->previous();
         break;
@@ -87,14 +85,15 @@ void MainWindow::initUI()
     // Save step table button
     m_saveStepsButton = new QPushButton("Save steps to CSV", this);
     connect(m_saveStepsButton, &QPushButton::clicked, m_table, &StepTable::saveFootfalls);
-    connect(m_saveStepsButton, &QPushButton::clicked, m_table, [&](){m_table->saveFootfalls(true);});
+    connect(m_saveStepsButton, &QPushButton::clicked, m_table, [&]() {
+        m_table->saveFootfalls(true);
+    });
     main_layout->addWidget(m_saveStepsButton, 10, 8, 1, 1, Qt::AlignCenter);
 
     // Set the layout for the main window
     auto *layout_widget = new QWidget(this);
     layout_widget->setLayout(main_layout);
     setCentralWidget(layout_widget);
-
 
     // Set up the status bar
     m_mainStatusBar = statusBar();
@@ -137,7 +136,6 @@ void MainWindow::connectPlaybackControls()
     connect(m_controls, &PlayerControls::changeRate, m_capturer, &CaptureThread::rateChanged);
     connect(m_controls, &PlayerControls::changeFrame, m_capturer, &CaptureThread::frameChanged);
 
-
     connect(m_controls, &PlayerControls::play, m_capturer, &CaptureThread::play);
     connect(m_controls, &PlayerControls::pause, m_capturer, &CaptureThread::pause);
     connect(m_controls, &PlayerControls::next, m_capturer, &CaptureThread::next);
@@ -145,7 +143,7 @@ void MainWindow::connectPlaybackControls()
     connect(m_controls, &PlayerControls::stop, m_capturer, &CaptureThread::stop);
 }
 
-void MainWindow::updateFrame(cv::Mat* mat, qint64 frameNum)
+void MainWindow::updateFrame(cv::Mat *mat, qint64 frameNum)
 {
     {
         // Lock while updating the frame for display
@@ -154,12 +152,11 @@ void MainWindow::updateFrame(cv::Mat* mat, qint64 frameNum)
         m_frameNum = frameNum;
     }
 
-    QImage frame(
-                m_currentFrame.data,
-                m_currentFrame.cols,
-                m_currentFrame.rows,
-                m_currentFrame.step,
-                QImage::Format_RGB888);
+    QImage frame(m_currentFrame.data,
+                 m_currentFrame.cols,
+                 m_currentFrame.rows,
+                 m_currentFrame.step,
+                 QImage::Format_RGB888);
 
     // Resize the image so it fits within the m_imageView
     auto viewrect_size = m_imageView->viewport()->size();
@@ -189,20 +186,18 @@ void MainWindow::findVideos()
     dialog.setViewMode(QFileDialog::Detail);
 
     QStringList dirName;
-     if (dialog.exec())
-     {
-         dirName = dialog.selectedFiles();
-         auto myDir = QDir(dirName.at(0));
-         auto video_list = myDir.entryInfoList(QDir::Files);
-         auto footfallPath = myDir.filePath(default_footfall);
+    if (dialog.exec()) {
+        dirName = dialog.selectedFiles();
+        auto myDir = QDir(dirName.at(0));
+        auto video_list = myDir.entryInfoList(QDir::Files);
+        auto footfallPath = myDir.filePath(default_footfall);
 
-         m_fileTable->fillTableWithFiles(video_list, footfallPath, myDir);
-         // Automatically start playing the first video in the list
-         m_fileTable->playFirstVideo();
-     }
-     else {
-         this->stopPlaybackOnError("Could not open the specified directory");
-     }
+        m_fileTable->fillTableWithFiles(video_list, footfallPath, myDir);
+        // Automatically start playing the first video in the list
+        m_fileTable->playFirstVideo();
+    } else {
+        this->stopPlaybackOnError("Could not open the specified directory");
+    }
 }
 
 void MainWindow::openVideo(QString video)
@@ -225,7 +220,7 @@ void MainWindow::openVideo(QString video)
 
 void MainWindow::stopPlaybackOnError(QString message)
 {
-    auto errWindow =  PopUpWindow (this, message);
+    auto errWindow = PopUpWindow(this, message);
     errWindow.setModal(true);
     errWindow.exec();
 }

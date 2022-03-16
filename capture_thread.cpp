@@ -1,23 +1,37 @@
 #include "capture_thread.h"
-#include <QElapsedTimer>
+#include "opencv2/videoio.hpp"
+#include <mutex>
 #include <QDebug>
+#include <QElapsedTimer>
 #include <QTime>
 #include <QTimer>
-#include <mutex>
-#include "opencv2/videoio.hpp"
 
-CaptureThread::CaptureThread(int camera, std::mutex *lock, qreal playback_rate):
-    m_running(false), m_cameraID(camera), m_videoPath(""), m_dataLock(lock), m_playbackFPS(playback_rate), m_fpsCalculating(false), m_fpsSum(0), m_curFPSSampleCount(0)
+CaptureThread::CaptureThread(int camera, std::mutex *lock, qreal playback_rate)
+    : m_running(false)
+    , m_cameraID(camera)
+    , m_videoPath("")
+    , m_dataLock(lock)
+    , m_playbackFPS(playback_rate)
+    , m_fpsCalculating(false)
+    , m_fpsSum(0)
+    , m_curFPSSampleCount(0)
 {
     m_timeSamples.resize(m_fpsSamples);
-    m_delayMS = 1/m_playbackFPS * 1000;
+    m_delayMS = 1 / m_playbackFPS * 1000;
 }
 
-CaptureThread::CaptureThread(QString videoPath, std::mutex *lock, qreal playback_rate):
-    m_running(false), m_cameraID(-1), m_videoPath(videoPath), m_dataLock(lock), m_playbackFPS(playback_rate), m_fpsCalculating(false), m_fpsSum(0), m_curFPSSampleCount(0)
+CaptureThread::CaptureThread(QString videoPath, std::mutex *lock, qreal playback_rate)
+    : m_running(false)
+    , m_cameraID(-1)
+    , m_videoPath(videoPath)
+    , m_dataLock(lock)
+    , m_playbackFPS(playback_rate)
+    , m_fpsCalculating(false)
+    , m_fpsSum(0)
+    , m_curFPSSampleCount(0)
 {
     m_timeSamples.resize(m_fpsSamples);
-    m_delayMS = 1/m_playbackFPS * 1000;
+    m_delayMS = 1 / m_playbackFPS * 1000;
 }
 
 CaptureThread::~CaptureThread()
@@ -29,8 +43,7 @@ void CaptureThread::run()
 {
     if (m_cameraID < 0) { // Video playback
         m_cap.open((m_videoPath.toStdString().c_str()));
-    }
-    else { // Webcam stream
+    } else { // Webcam stream
         m_cap.open(m_cameraID);
     }
     m_running = true;
@@ -38,15 +51,14 @@ void CaptureThread::run()
     exec();
 }
 
-void CaptureThread::videoPlayback(bool& haveMoreFrames)
+void CaptureThread::videoPlayback(bool &haveMoreFrames)
 {
     QElapsedTimer timer;
 
-    while (m_running && haveMoreFrames)
-    {
+    while (m_running && haveMoreFrames) {
         timer.restart();
 
-        if (m_state == QMediaPlayer::PlayingState){
+        if (m_state == QMediaPlayer::PlayingState) {
             haveMoreFrames = readNextVideoFrame();
         }
         auto sleeptime = m_delayMS - timer.elapsed();
@@ -71,7 +83,6 @@ bool CaptureThread::readNextVideoFrame()
         std::lock_guard<std::mutex> lockGuard(*m_dataLock);
         m_frame = m_tmpFrame;
     }
-
 
     emit frameCaptured(&m_frame, m_cap.get(cv::CAP_PROP_POS_FRAMES));
     return true;
@@ -128,7 +139,7 @@ void CaptureThread::rateChanged(qreal new_rate)
     if (new_rate > 0)
         m_playbackFPS = new_rate;
 
-    m_delayMS = 1/m_playbackFPS * 1000;
+    m_delayMS = 1 / m_playbackFPS * 1000;
 }
 
 void CaptureThread::frameChanged(qint64 frame)
@@ -166,8 +177,7 @@ void CaptureThread::playVideo()
     if (m_cameraID < 0) { // Video playback
         bool haveMoreFrames{true};
         videoPlayback(haveMoreFrames);
-    }
-    else { // Webcam stream - support for this has been removed
+    } else { // Webcam stream - support for this has been removed
         setState(QMediaPlayer::StoppedState);
     }
 }
@@ -191,4 +201,3 @@ int CaptureThread::exec()
 
     return 0;
 }
-

@@ -57,11 +57,11 @@ public:
         pushButton->setText(QCoreApplication::translate("PopUpWindow", "OK", nullptr));
         errorMessage->setText(QCoreApplication::translate("PopUpWindow", "TextLabel", nullptr));
     } // retranslateUi
-
 };
 
 namespace Ui {
-    class PopUpWindow: public Ui_PopUpWindow {};
+class PopUpWindow : public Ui_PopUpWindow
+{};
 } // namespace Ui
 
 QT_END_NAMESPACE

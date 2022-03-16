@@ -1,15 +1,20 @@
 #include "filetable.h"
 
 #include <algorithm>
-#include <QGridLayout>
-#include <QHeaderView>
 #include <QDebug>
 #include <QDir>
+#include <QGridLayout>
+#include <QHeaderView>
 
-FileTable::FileTable(QWidget *parent, const QString stepFormat) : QWidget(parent), m_lastOccupiedPosition{}, m_acceptableFormats{"avi", "mov", "mp4"}, m_stepFormat{stepFormat}
+FileTable::FileTable(QWidget *parent, const QString stepFormat)
+    : QWidget(parent)
+    , m_lastOccupiedPosition{}
+    , m_acceptableFormats{"avi", "mov", "mp4"}
+    , m_stepFormat{stepFormat}
 {
     m_table = new QTableWidget(1, static_cast<qint64>(FileTableRowName::COUNT), this);
-    m_table->setHorizontalHeaderLabels(QStringList() << "File Name" << "Have Exported Steps?");
+    m_table->setHorizontalHeaderLabels(QStringList() << "File Name"
+                                                     << "Have Exported Steps?");
 
     // Fix the style of the header to be consistent with rest of the table
     styleHeader();
@@ -19,15 +24,16 @@ FileTable::FileTable(QWidget *parent, const QString stepFormat) : QWidget(parent
     // Set layout for this widget
     QGridLayout *layout = new QGridLayout();
     layout->addWidget(m_table, 0, 0);
-    layout->setContentsMargins(0,0,0,0);
+    layout->setContentsMargins(0, 0, 0, 0);
     setLayout(layout);
     connect(m_table, &QTableWidget::itemDoubleClicked, this, &FileTable::handleItemDoubleClicked);
-
 }
 
-bool FileTable::isValidVideo(const QString& file) {
+bool FileTable::isValidVideo(const QString &file)
+{
     auto suffix = QFileInfo(file).suffix().toLower();
-    if (std::find(m_acceptableFormats.begin(), m_acceptableFormats.end(), suffix) == m_acceptableFormats.end()) {
+    if (std::find(m_acceptableFormats.begin(), m_acceptableFormats.end(), suffix)
+        == m_acceptableFormats.end()) {
         return false;
     }
     return true;
@@ -45,23 +51,23 @@ void FileTable::fillTableWithFiles(QFileInfoList files, QString footfallFolder, 
     auto columnToInsertAt = static_cast<qint64>(FileTableRowName::FileName);
 
     for (auto &file : files) {
-         auto curFileName = file.fileName();
+        auto curFileName = file.fileName();
 
-         // Only add allowed videos
-         if (!isValidVideo(curFileName)) {
-             continue;
-         }
+        // Only add allowed videos
+        if (!isValidVideo(curFileName)) {
+            continue;
+        }
 
-         auto new_item = new QTableWidgetItem(curFileName);
+        auto new_item = new QTableWidgetItem(curFileName);
 
-         if (m_lastOccupiedPosition == m_table->rowCount())
-             m_table->insertRow(m_lastOccupiedPosition);
+        if (m_lastOccupiedPosition == m_table->rowCount())
+            m_table->insertRow(m_lastOccupiedPosition);
 
-         m_table->setItem(m_lastOccupiedPosition, columnToInsertAt, std::move(new_item));
+        m_table->setItem(m_lastOccupiedPosition, columnToInsertAt, std::move(new_item));
 
-         // Update label status
-         setLabelStatus(m_lastOccupiedPosition);
-         m_lastOccupiedPosition++;
+        // Update label status
+        setLabelStatus(m_lastOccupiedPosition);
+        m_lastOccupiedPosition++;
     }
 }
 
@@ -69,9 +75,8 @@ void FileTable::playFirstVideo()
 {
     if (m_lastOccupiedPosition < 1) {
         emit failedToPlayVideo("The selected folder does not contain any playable videos");
-    }
-    else {
-        playVideoFromTable(m_table->itemAt(0,0));
+    } else {
+        playVideoFromTable(m_table->itemAt(0, 0));
     }
 }
 
@@ -101,7 +106,9 @@ void FileTable::setLabelStatus(qint64 rowToInsertAt)
     auto statusCol = static_cast<qint64>(FileTableRowName::StepStatus);
 
     auto curFileName = m_table->item(rowToInsertAt, fileCol)->data(Qt::DisplayRole);
-    QFileInfo footfallFileInfo = QFileInfo(QDir(m_footfall_folder), QFileInfo(curFileName.toString()).completeBaseName() + m_stepFormat);
+    QFileInfo footfallFileInfo = QFileInfo(QDir(m_footfall_folder),
+                                           QFileInfo(curFileName.toString()).completeBaseName()
+                                               + m_stepFormat);
 
     if (footfallFileInfo.exists()) {
         testIcon = this->style()->standardIcon(QStyle::SP_DialogApplyButton);
@@ -125,19 +132,19 @@ void FileTable::styleHeader()
 {
     // Work-around to style header:
     // https://stackoverflow.com/questions/38554640/add-border-under-column-headers-in-qtablewidget
-    m_table->horizontalHeader()->setStyleSheet( "QHeaderView::section{"
-            "border-top:0px solid #D8D8D8;"
-            "border-left:0px solid #D8D8D8;"
-            "border-right:1px solid #D8D8D8;"
-            "border-bottom: 1px solid #D8D8D8;"
-            "background-color:white;"
-            "padding:4px;"
-        "}"
-        "QTableCornerButton::section{"
-            "border-top:0px solid #D8D8D8;"
-            "border-left:0px solid #D8D8D8;"
-            "border-right:1px solid #D8D8D8;"
-            "border-bottom: 1px solid #D8D8D8;"
-            "background-color:white;"
-        "}" );
+    m_table->horizontalHeader()->setStyleSheet("QHeaderView::section{"
+                                               "border-top:0px solid #D8D8D8;"
+                                               "border-left:0px solid #D8D8D8;"
+                                               "border-right:1px solid #D8D8D8;"
+                                               "border-bottom: 1px solid #D8D8D8;"
+                                               "background-color:white;"
+                                               "padding:4px;"
+                                               "}"
+                                               "QTableCornerButton::section{"
+                                               "border-top:0px solid #D8D8D8;"
+                                               "border-left:0px solid #D8D8D8;"
+                                               "border-right:1px solid #D8D8D8;"
+                                               "border-bottom: 1px solid #D8D8D8;"
+                                               "background-color:white;"
+                                               "}");
 }

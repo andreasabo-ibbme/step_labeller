@@ -62,7 +62,8 @@
 #include <QDebug>
 
 PlayerControls::PlayerControls(qreal fps_start, QWidget *parent)
-    : QWidget(parent), m_playback_rate(fps_start)
+    : QWidget(parent)
+    , m_playback_rate(fps_start)
 {
     m_playButton = new QToolButton(this);
     m_playButton->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
@@ -84,7 +85,6 @@ PlayerControls::PlayerControls(qreal fps_start, QWidget *parent)
     m_previousButton->setIcon(style()->standardIcon(QStyle::SP_MediaSkipBackward));
 
     connect(m_previousButton, &QAbstractButton::clicked, this, &PlayerControls::previous);
-
 
     // FPS box
     m_fps_label = new QLabel(QString("FPS:"), this);
@@ -139,9 +139,9 @@ void PlayerControls::setState(QMediaPlayer::State state)
 
 int PlayerControls::volume() const
 {
-    qreal linearVolume =  QAudio::convertVolume(m_volumeSlider->value() / qreal(100),
-                                                QAudio::LogarithmicVolumeScale,
-                                                QAudio::LinearVolumeScale);
+    qreal linearVolume = QAudio::convertVolume(m_volumeSlider->value() / qreal(100),
+                                               QAudio::LogarithmicVolumeScale,
+                                               QAudio::LinearVolumeScale);
     return qRound(linearVolume * 100);
 }
 
@@ -164,9 +164,8 @@ void PlayerControls::setMuted(bool muted)
     if (muted != m_playerMuted) {
         m_playerMuted = muted;
 
-        m_muteButton->setIcon(style()->standardIcon(muted
-                ? QStyle::SP_MediaVolumeMuted
-                : QStyle::SP_MediaVolume));
+        m_muteButton->setIcon(
+            style()->standardIcon(muted ? QStyle::SP_MediaVolumeMuted : QStyle::SP_MediaVolume));
     }
 }
 

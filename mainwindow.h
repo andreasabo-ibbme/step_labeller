@@ -3,6 +3,7 @@
 
 #include <QApplication>
 #include <QCheckBox>
+#include <QFileInfoList>
 #include <QGraphicsScene>
 #include <QGraphicsView>
 #include <QKeyEvent>
@@ -13,7 +14,6 @@
 #include <QPushButton>
 #include <QStatusBar>
 #include <QTableWidget>
-#include <QFileInfoList>
 
 #include "capture_thread.h"
 #include "filetable.h"
@@ -40,7 +40,7 @@ private:
     void connectCaptureControls();
 
 private slots:
-    void updateFrame(cv::Mat* frame, qint64 frameNum);
+    void updateFrame(cv::Mat *frame, qint64 frameNum);
     void updateFPS(float fps);
     void findVideos();
     void openVideo(QString video);

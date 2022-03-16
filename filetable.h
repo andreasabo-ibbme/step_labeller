@@ -2,11 +2,11 @@
 #define FILETABLE_H
 
 #include <QDir>
-#include <QWidget>
-#include <QTableWidget>
 #include <QFileInfoList>
+#include <QTableWidget>
+#include <QWidget>
 
-enum class FileTableRowName {FileName, StepStatus, COUNT};
+enum class FileTableRowName { FileName, StepStatus, COUNT };
 
 class FileTable : public QWidget
 {
@@ -29,7 +29,7 @@ private slots:
 private:
     void setLabelStatus(qint64 rowToInsertAt);
     void playVideoFromTable(const QTableWidgetItem *item);
-    bool isValidVideo(const QString& file);
+    bool isValidVideo(const QString &file);
 
 private:
     void styleHeader();

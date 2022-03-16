@@ -112,7 +112,6 @@ private:
     QLineEdit *m_frame_box = nullptr;
     QLabel *m_frame_label = nullptr;
     qreal m_playback_rate;
-
 };
 
 #endif // PLAYERCONTROLS_H

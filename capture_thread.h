@@ -1,17 +1,16 @@
 #ifndef CAPTURETHREAD_H
 #define CAPTURETHREAD_H
 
-#include <mutex>
 #include <deque>
+#include <mutex>
 
 #include <QMediaPlayer>
 #include <QMutex>
 #include <QString>
 #include <QThread>
 
-#include "opencv2/world.hpp"
 #include "opencv2/opencv.hpp"
-
+#include "opencv2/world.hpp"
 
 class PlayerControls;
 
@@ -24,7 +23,7 @@ public:
     CaptureThread(int camera, std::mutex *lock, qreal playback_rate = 30);
 
     ~CaptureThread();
-    void setRunning(bool run) {m_running = run; }
+    void setRunning(bool run) { m_running = run; }
     void startCalcFPS(bool start);
 
 protected:
@@ -33,12 +32,12 @@ protected:
 private:
     void run() override;
 
-    void videoPlayback(bool& haveMoreFrames);
+    void videoPlayback(bool &haveMoreFrames);
     bool readNextVideoFrame();
     void setState(QMediaPlayer::State state);
     void playVideo();
 
- public slots:
+public slots:
     void play();
     void pause();
     void next();
@@ -47,7 +46,6 @@ private:
     void rateChanged(qreal new_rate);
     void frameChanged(qint64 frame);
     void togglePlayPause();
-
 
 signals:
     void frameCaptured(cv::Mat *data, qint64 frameNum);
@@ -69,7 +67,6 @@ private:
 
     // Playback controls
     QMediaPlayer::State m_state = QMediaPlayer::StoppedState;
-
 
     // FPS calculating
     bool m_fpsCalculating;
