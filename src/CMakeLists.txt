@@ -6,6 +6,9 @@ find_package(QT NAMES Qt5 REQUIRED COMPONENTS Core)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Gui Multimedia)
 find_package(Qt${QT_VERSION_MAJOR} OPTIONAL_COMPONENTS Widgets)
 
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+
 qt_wrap_ui(UI_HEADERS ${UI_FILES})
 
 add_executable(${CMAKE_PROJECT_NAME}
@@ -14,14 +17,14 @@ add_executable(${CMAKE_PROJECT_NAME}
   ${HEADER_FILES}
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
-    ${OPENCV_DIR}/install/include
-)
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+link_directories( ${OpenCV_LIB_DIR} )
 
+cmake_print_variables(OpenCV_LIBS)
 target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
     Qt::Core
     Qt::Gui
     Qt::Multimedia
     Qt::Widgets
-    ${OPENCV_DIR}/bin/libopencv_world451.dll
+    ${OpenCV_LIBS}
 )
