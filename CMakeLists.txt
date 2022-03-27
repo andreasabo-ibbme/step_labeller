@@ -11,41 +11,49 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 
-if(NOT DEFINED INSTALL_EXAMPLESDIR)
-    set(INSTALL_EXAMPLESDIR "examples")
+SET(OPENCV_DIR $ENV{OPENCV_DIR})
+
+if(NOT DEFINED INSTALL_EXAMPLEDIR)
+    set(INSTALL_EXAMPLEDIR "bin")
 endif()
 
-set(INSTALL_EXAMPLEDIR "${INSTALL_EXAMPLESDIR}")
+include(CMakePrintHelpers)
+cmake_print_variables(INSTALL_EXAMPLEDIR)
+cmake_print_variables(OPENCV_DIR)
 
-find_package(QT NAMES Qt5 Qt6 REQUIRED COMPONENTS Core)
+# Stop if OPENCV_DIR isn't set
+if(NOT DEFINED OPENCV_DIR)
+  message(FATAL_ERROR "OPENCV_DIR not found!
+     Set the OPENCV_DIR environment variable or pass in to cmake with -DOPENCV_DIR={path_to_opencv_root_build_dir}")
+endif(NOT DEFINED OPENCV_DIR)
+
+find_package(QT NAMES Qt5 REQUIRED COMPONENTS Core)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Gui Multimedia)
 find_package(Qt${QT_VERSION_MAJOR} OPTIONAL_COMPONENTS Widgets)
 
+cmake_print_variables(QT_VERSION_MAJOR)
+
 add_executable(StepLabeller WIN32 MACOSX_BUNDLE
+    main.cpp
     capture_thread.cpp capture_thread.h
     filetable.cpp filetable.h
-    main.cpp
     mainwindow.cpp mainwindow.h
     playercontrols.cpp playercontrols.h
     popupwindow.cpp popupwindow.h popupwindow.ui
     steptable.cpp steptable.h
 )
+
 target_include_directories(StepLabeller PUBLIC
-    c:/opencv_build_release/install/include
+    ${OPENCV_DIR}/install/include
 )
 
 target_link_libraries(StepLabeller PUBLIC
     Qt::Core
     Qt::Gui
     Qt::Multimedia
-    c:/opencv_build_release/bin/libopencv_world451.dll
+    Qt::Widgets
+    ${OPENCV_DIR}/bin/libopencv_world451.dll
 )
-
-if((QT_VERSION_MAJOR GREATER 4))
-    target_link_libraries(StepLabeller PUBLIC
-        Qt::Widgets
-    )
-endif()
 
 install(TARGETS StepLabeller
     RUNTIME DESTINATION "${INSTALL_EXAMPLEDIR}"
