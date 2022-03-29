@@ -10,7 +10,6 @@
 #include <QThread>
 
 #include "opencv2/opencv.hpp"
-#include "opencv2/world.hpp"
 
 class PlayerControls;
 
