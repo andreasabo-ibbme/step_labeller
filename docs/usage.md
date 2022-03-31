@@ -3,11 +3,11 @@
 ## Select Folder with Videos
 After lauching the Step Labeller UI, a folder of videos to label can be selected through the `File\Open Videos` menu in the top-left. Be sure to select a *folder* rather than individual video files. 
 
-![Open Folders](docs/open_videos_menu_box.PNG)
+![Open Folders](open_videos_menu_box.png)
 
 ## User Interface Components
 Upon selecting a folder, the files list and footfall list will populate. The video will start in the playback window in the the center of the screen.
-![Components](docs/components.PNG)
+![Components](components.png)
 
 ## Labelling Instructions
 
