@@ -14,10 +14,10 @@ MainWindow::MainWindow(QWidget *parent)
     , m_capturer(nullptr)
     , m_frameNum(0)
 {
-    initUI();
     m_dataLock = new std::mutex;
     m_outputStepFormat = ".csv";
     m_font = QFont("Times", 16, QFont::Bold);
+    initUI();
 }
 
 MainWindow::~MainWindow() {}

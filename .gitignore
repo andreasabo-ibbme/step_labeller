@@ -7,4 +7,6 @@ object_script*
 Makefile*
 *.stash
 
+# build folders
 build*/*
+bin/
