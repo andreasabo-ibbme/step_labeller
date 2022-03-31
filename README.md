@@ -5,6 +5,7 @@ This project provides a simple GUI for manually labelling footfalls in videos. U
 The main features of this library include the ability to:  
 -  Select a root folder and label all videos in the directory
 -  Export the frame number of the left/right footfalls in `.csv` format for use in downstream gait analysis pipelines
+- Reload previously annotated footfalls and resave after making any necessary changes
 -  Specify the playback speed (in fps) or step through the video frame by frame
 
 ![Sample UI](docs/sample_labelling.PNG)
